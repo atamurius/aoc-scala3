@@ -40,12 +40,6 @@ case object Day1 extends Day:
     solve1(sample) shouldBe Some(514579)
     solve2(sample) shouldBe Some(241861950)
 
-  override def star1(): Unit =
-    solve1(readInput(parse)) match
-    case None => println("Not found")
-    case Some(x) => println(s"Result: $x")
+  override def star1(): Any = solve1(readInput(parse))
 
-  override def star2(): Unit =
-    solve2(readInput(parse)) match
-    case None => println("Not found")
-    case Some(x) => println(s"Result: $x")
+  override def star2(): Unit = solve2(readInput(parse))

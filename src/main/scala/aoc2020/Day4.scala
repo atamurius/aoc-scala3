@@ -88,6 +88,8 @@ case object Day4 extends Day:
     (RequiredField("ecl") ~> OneOf("amb", "blu", "brn", "gry", "grn", "hzl", "oth")) &
     (RequiredField("pid") ~> Match("[0-9]{9}".r)) 
   
+  def countValid[T](xs: Iterable[T], parser: Parser[T, Any]) = xs.iterator.map(parser).count(_.isSuccess)
+  
   override def test(): Unit =
     val sample = parse(
       """
@@ -106,13 +108,9 @@ case object Day4 extends Day:
         |iyr:2011 ecl:brn hgt:59in
         |""".stripMargin.linesIterator)
   
-    sample.count(p => ValidPassport(p).isSuccess) shouldBe 2
-    sample.count(p => ValidPassport2(p).isSuccess) shouldBe 1
+    countValid(sample, ValidPassport) shouldBe 2
+    countValid(sample, ValidPassport2) shouldBe 1
 
-  override def star1(): Unit =
-    val ps = readInput(parse(_))
-    println(s"Valid: ${ps.count(p => ValidPassport(p).isSuccess)}")
+  override def star1(): Any = countValid(readInput(parse(_)), ValidPassport)
 
-  override def star2(): Unit =
-    val ps = readInput(parse(_))
-    println(s"Valid: ${ps.count(p => ValidPassport2(p).isSuccess)}")
+  override def star2(): Any = countValid(readInput(parse(_)), ValidPassport2)

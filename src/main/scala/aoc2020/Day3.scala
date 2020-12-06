@@ -43,10 +43,8 @@ case object Day3 extends Day:
     example.treesAt(3, 1) shouldBe 7
     slopes.map(example.treesAt).product shouldBe 336
 
-  override def star1(): Unit =
-    val trees = readInput(parse).treesAt(3, 1)
-    println(s"Trees: $trees")
+  override def star1(): Any = readInput(parse).treesAt(3, 1)
 
-  override def star2(): Unit =
+  override def star2(): Any =
     val map = readInput(parse)
-    println(s"All slopes product: ${slopes.map(map.treesAt).map(_.toLong).product}")
+    slopes.map(map.treesAt).map(_.toLong).product

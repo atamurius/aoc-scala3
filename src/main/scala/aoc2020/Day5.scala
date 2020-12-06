@@ -38,11 +38,9 @@ case object Day5 extends Day:
     parseSeat("BFFFBBFRRR") shouldBe Seat(70, 7)
     parseSeat("BBFFBBFRLL") shouldBe Seat(102, 4)
   
-  override def star1(): Unit =
-    val max = readInput(_.map(parseSeat).maxBy(_.id))
-    println(s"Max seat: $max")
+  override def star1(): Any = readInput(_.map(parseSeat).maxBy(_.id))
 
-  override def star2(): Unit =
+  override def star2(): Any =
     val present = readInput(_.map(parseSeat).toSet)
     println()
     for (col <- 0 until 8) println(
@@ -51,5 +49,4 @@ case object Day5 extends Day:
         else '.'
       }.mkString
     )
-    val missing = findMissing(present)
-    println(s"Missing seats: ${missing.mkString(", ")}")
+    findMissing(present) mkString ", "

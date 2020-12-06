@@ -28,11 +28,7 @@ case object Day2 extends Day:
     sample count isValid shouldBe 2
     sample count isNewValid shouldBe 1
 
-  override def star1(): Unit =
-    val valid = readInput(_ map parseLine count isValid)
-    println(s"Valid passwords: $valid")
+  override def star1(): Any = readInput(_ map parseLine count isValid)
 
-  override def star2(): Unit =
-    val valid = readInput(_ map parseLine count isNewValid)
-    println(s"Valid passwords: $valid")
+  override def star2(): Any = readInput(_ map parseLine count isNewValid)
     
