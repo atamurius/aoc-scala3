@@ -33,17 +33,17 @@ case object Day8 extends Day:
         else run(current.next, executed + current.pointer)
       run(this, Set.empty)
   
-    def swapAt(pos: Int): Program = 
+    def swapAt(pos: Int): Option[Program] = 
       val swapped = code(pos) match
-        case Instruction.Jmp(x) => Instruction.Nop(x)
-        case Instruction.Nop(x) => Instruction.Jmp(x)
-        case other => other
-      copy(code = code.updated(pos, swapped))
+        case Instruction.Jmp(x) => Some(Instruction.Nop(x))
+        case Instruction.Nop(x) => Some(Instruction.Jmp(x))
+        case _ => None
+      swapped.map(s => copy(code = code.updated(pos, s)))
   
     def findHalted: Option[Program] = (
       for 
         pos <- code.indices.iterator if !code(pos).isInstanceOf[Instruction.Acc]
-        result = swapAt(pos).runToLoop if result.isHalted
+        result <- swapAt(pos).map(_.runToLoop) if result.isHalted
       yield result
     ).toSeq.headOption
   
@@ -68,7 +68,7 @@ case object Day8 extends Day:
     test1.pointer shouldBe 1
     test1.acc shouldBe 5
   
-    val test2 = sample.swapAt(7).runToLoop
+    val test2 = sample.swapAt(7).get.runToLoop
     test2.isHalted shouldBe true
     test2.acc shouldBe 8
     sample.findHalted shouldBe Some(test2)
