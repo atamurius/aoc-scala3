@@ -14,7 +14,8 @@ val Days = Seq(
   Day7,
   Day8,
   Day9,
-  Day10
+  Day10,
+  Day11
 )
 
 @main def run(days: String*): Unit =
