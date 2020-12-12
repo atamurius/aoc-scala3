@@ -1,12 +1,8 @@
 package aoc2020
 
+import coord._
+
 case object Day3 extends Day:
-  type Pos = (Int, Int)
-  
-  extension (self: Pos):
-    def x = self._1
-    def y = self._2
-    def + (d: Pos): Pos = (self.x + d.x, self.y + d.y)
   
   case class Map(rows: Vector[String]):
     require(rows.nonEmpty)
@@ -15,9 +11,9 @@ case object Day3 extends Day:
     def apply(x: Int, y: Int): Char = rows(y)(x % width)
     def slope(dx: Int, dy: Int): Iterator[Char] =
       Iterator
-        .iterate((0,0))(_ + (dx, dy))
+        .iterate(Int2.zero)(_ + Int2(dx, dy))
         .takeWhile(_.y < height)
-        .map(apply)
+        .map { case Int2(x, y) => apply(x, y) }
     def treesAt(dx: Int, dy: Int) = slope(dx, dy).count(_ == '#')
   
   def parse(m: Iterator[String]): Map = Map(m.toVector)
