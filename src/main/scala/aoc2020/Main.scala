@@ -1,7 +1,10 @@
 package aoc2020
 
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.{ExecutionException, Executors, ForkJoinPool, TimeUnit, TimeoutException}
+import scala.concurrent.{Await, ExecutionContext, Future, Promise}
+import scala.jdk.FutureConverters._
 import scala.concurrent.duration._
+import scala.util.Try
 import scala.util.control.NonFatal
 
 val Days = Seq(
@@ -16,7 +19,8 @@ val Days = Seq(
   Day9,
   Day10,
   Day11,
-  Day12
+  Day12,
+  Day13
 )
 
 @main def run(days: String*): Unit =
@@ -34,15 +38,35 @@ val Days = Seq(
 
   var failed = false
   for day <- Days do
-    try day.test()
+    val wait = Promise[Unit]
+    val action: Runnable = { () =>
+      try
+        day.test()
+        wait.success(())
+      catch
+        case t: Throwable => 
+          wait.failure(t)
+    }
+    val test = ForkJoinPool.commonPool().submit(action)
+    try Await.result(wait.future, 5.seconds)
     catch
-      case NonFatal(e) =>
+      case _: TimeoutException =>
+        test.cancel(true)
+        sys.error(s"$day test timed out")
         failed = true
-        println(s"$day test failed")
-        e.printStackTrace(System.out)
-  
-  if failed then sys.exit(1)
+      case e: ExecutionException if e.getCause.isInstanceOf[AssertionError] =>
+        println(s"$day test failed:\n${e.getCause.getMessage}")
+        e.getCause.getStackTrace.iterator.find(_.getClassName.startsWith("aoc2020.Day")).foreach { s =>
+          println(s"at ${s.getClassName.stripSuffix("$")} (${s.getFileName}:${s.getLineNumber})")
+        }
+        failed = true
+      case e: ExecutionException =>
+        println(s"$day test failed:")
+        e.getCause.printStackTrace(System.out)
+        failed = true
 
+  if failed then sys.exit(1)
+  
   val daysToShow = if days.isEmpty then Seq(Days.last.productPrefix) else days
   for day <- daysToShow do
     println(s"=== $day ===")
