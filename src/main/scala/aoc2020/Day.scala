@@ -14,5 +14,5 @@ trait Day extends Product:
     val source = Source.fromResource(s"${productPrefix}.input")
     try read(source.getLines())
     finally source.close()
-  
+
   def test(): Unit = ()
