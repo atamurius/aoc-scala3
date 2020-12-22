@@ -11,7 +11,7 @@ case object Day3 extends Day:
     def apply(x: Int, y: Int): Char = rows(y)(x % width)
     def slope(dx: Int, dy: Int): Iterator[Char] =
       Iterator
-        .iterate(Int2.zero)(_ + Int2(dx, dy))
+        .iterate[Int2](zero)(_ + Int2(dx, dy))
         .takeWhile(_.y < height)
         .map { case Int2(x, y) => apply(x, y) }
     def treesAt(dx: Int, dy: Int) = slope(dx, dy).count(_ == '#')

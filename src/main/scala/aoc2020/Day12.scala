@@ -12,7 +12,7 @@ case object Day12 extends Day:
   
   def parse(line: String) = Instr(Op.valueOf(line.take(1)), line.drop(1).toInt)
 
-  case class Position(angle: Dir = Dir.E, pos: Int2 = Int2.zero):
+  case class Position(angle: Dir = Dir.E, pos: Int2 = zero):
     override def toString: String = s"$pos, $angle"
 
     def move(instr: Instr) = instr match
@@ -32,7 +32,7 @@ case object Day12 extends Day:
     }
     def manhattan = pos.norm
   
-  case class Ship(waypoint: Int2 = Int2(10, 1), pos: Int2 = Int2.zero):
+  case class Ship(waypoint: Int2 = Int2(10, 1), pos: Int2 = zero):
     override def toString: String = s"$pos, waypoint $waypoint"
     def move(instr: Instr) = instr match
       case Instr(Op.N, value) => copy(waypoint = waypoint + Dir.N.delta * value)
