@@ -113,7 +113,7 @@ case object Day23 extends Day:
   
   override def star1(): Any = new Game(input).after(100).canonical
   
-  override def star2(): Any = 
+  override def star2(): Any =
     val game = new Game(input, 1000000).after(10000000)
     val Seq(a, b) = game.canonicals.take(2).toList
     println(s"$a, $b")
