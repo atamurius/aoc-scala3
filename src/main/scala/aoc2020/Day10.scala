@@ -1,5 +1,7 @@
 package aoc2020
 
+import common.Day
+
 case object Day10 extends Day:
 
   def numbers(lines: Iterator[String]) = lines.map(_.toInt).toVector

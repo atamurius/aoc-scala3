@@ -1,5 +1,7 @@
 package aoc2020
 
+import common.Day
+
 import scala.collection.Iterator.iterate
 
 case object Day25 extends Day:

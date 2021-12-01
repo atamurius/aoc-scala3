@@ -1,6 +1,7 @@
 package aoc2020
 
-import coord._
+import common.Day
+import common.coord.*
 
 case object Day3 extends Day:
   

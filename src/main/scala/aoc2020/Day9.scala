@@ -1,5 +1,7 @@
 package aoc2020
 
+import common.Day
+
 import scala.language.implicitConversions
 
 case object Day9 extends Day:
@@ -11,7 +13,7 @@ case object Day9 extends Day:
     def += (t: T): Unit =
       indexed += t -> (indexed(t) + 1)
       window = window :+ t
-      if window.size > size
+      if window.size > size then
         val r = window.head
         indexed(r) - 1 match
           case 0 => indexed -= r
@@ -29,6 +31,7 @@ case object Day9 extends Day:
     val window = RollingWindow[T](range)
     ns.find { n =>
       if window.isPartial
+      then
         window += n
         false
       else

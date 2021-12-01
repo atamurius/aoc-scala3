@@ -1,5 +1,7 @@
 package aoc2020
 
+import common.Day
+
 import scala.annotation.tailrec
 
 case object Day7 extends Day:

@@ -1,7 +1,9 @@
 package aoc2020
 
+import common.Day
+
 import scala.annotation.tailrec
-import coord._
+import common.coord.*
 
 case object Day24 extends Day:
   override def test(): Unit =

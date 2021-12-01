@@ -1,5 +1,7 @@
 package aoc2020
 
+import common.Day
+
 import scala.annotation.tailrec
 import scala.collection.Iterator.iterate
 
@@ -59,6 +61,7 @@ case object Day14 extends Day:
     val it = xs.iterator
     @tailrec def collect(acc: Seq[Vector[T]] = List(Vector.empty)): Seq[Vector[T]] =
       if it.hasNext
+      then
         val options = it.next()  
         collect(for xs <- acc; x <- options yield xs :+ x)
       else acc

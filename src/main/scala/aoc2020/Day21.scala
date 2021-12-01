@@ -1,5 +1,7 @@
 package aoc2020
 
+import common.Day
+
 case object Day21 extends Day:
   override def test(): Unit =
     val sample = parse(

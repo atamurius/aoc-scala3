@@ -1,5 +1,7 @@
 package aoc2020
 
+import common.Day
+
 case object Day1 extends Day:
 
   def parse(input: Iterator[String]): Vector[Int] = input.map(_.toInt).toVector

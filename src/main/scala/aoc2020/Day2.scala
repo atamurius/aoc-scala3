@@ -1,5 +1,7 @@
 package aoc2020
 
+import common.Day
+
 case object Day2 extends Day:
   private val Line = """(\d+)-(\d+) (\S): (\S+)""".r
 

@@ -1,5 +1,7 @@
 package aoc2020
 
+import common.Day
+
 import scala.util.control.NonFatal
 import scala.util.matching.Regex
 import scala.util.{Failure, Success, Try}
@@ -25,7 +27,7 @@ case object Day4 extends Day:
 
   def validate[T](f: T => Unit): Parser[T, T] = t => Try { f(t); t }
   
-  extension[A,B,C](self: Parser[A, B]):
+  extension[A,B,C](self: Parser[A, B])
     def map(f: B => C): Parser[A, C] = x => self(x).map(f)
     def ~> (p: Parser[B, C]): Parser[A, C] = x => self(x).flatMap(p)
     def & (p: Parser[A, C]): Parser[A, (B, C)] = x => for (a <- self(x); b <- p(x)) yield (a, b)

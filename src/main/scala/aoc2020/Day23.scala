@@ -1,13 +1,15 @@
 package aoc2020
 
+import common.Day
+
 import scala.annotation.tailrec
 import scala.collection.Iterator.iterate
 import scala.collection.mutable.ListBuffer
-import scala.collection.parallel.CollectionConverters._
+import scala.collection.parallel.CollectionConverters.*
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future, Promise}
 import scala.language.implicitConversions
-import scala.concurrent.ExecutionContext.Implicits._
+import scala.concurrent.ExecutionContext.Implicits.*
 
 case object Day23 extends Day:
   override def test(): Unit =
@@ -41,7 +43,8 @@ case object Day23 extends Day:
       var range = false
       for i <- 2 until size do
         if numbers(i - 1) + 1 == numbers(i)
-          if !range
+        then
+          if !range then
             buff ++= ".."
             range = true
         else
@@ -101,7 +104,7 @@ case object Day23 extends Day:
       var start = System.nanoTime()
       val LogBatch = 10000
       for i <- 1 to n do
-        if i % LogBatch == 0
+        if i % LogBatch == 0 then
           val now = System.nanoTime()
           val seconds = (now - start) / 10e9d
           start = now

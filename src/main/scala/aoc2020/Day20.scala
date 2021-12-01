@@ -1,6 +1,7 @@
 package aoc2020
 
-import aoc2020.coord._
+import common.Day
+import common.coord.*
 
 import scala.annotation.tailrec
 import scala.language.implicitConversions
@@ -165,7 +166,7 @@ case object Day20 extends Day:
     lazy val mutations = Iterator.iterate(this)(_.rotate).take(4).toSet.flatMap(t => Seq(t, t.flipH, t.flipV))
 
     def applyPattern(p: Seq[Int2]) =
-      def matches(p: Seq[Int2]) = p.forall((x, y) => image(y)(x) != '.')
+      def matches(p: Seq[Int2]) = p.forall(p => image(p.y)(p.x) != '.')
       val (_, max) = boundingBox(p)
       val points = for 
         x <- 0 until width - max.x

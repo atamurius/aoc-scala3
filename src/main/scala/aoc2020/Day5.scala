@@ -1,5 +1,7 @@
 package aoc2020
 
+import common.Day
+
 case object Day5 extends Day:
   
   case class Seat(row: Int, column: Int):

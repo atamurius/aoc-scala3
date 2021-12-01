@@ -1,5 +1,7 @@
 package aoc2020
 
+import common.Day
+
 case object Day11 extends Day:
   
   enum Seat(val display: Char):

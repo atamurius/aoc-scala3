@@ -1,5 +1,7 @@
 package aoc2020
 
+import common.Day
+
 case object Day19 extends Day:
   override def star1(): Any = readInput { in =>
     val (rules, lines) = parse(in)
