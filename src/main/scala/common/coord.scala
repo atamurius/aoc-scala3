@@ -30,6 +30,7 @@ object coord:
       def norm: Item = a.components.map(N.abs).sum
       def adjascent: Iterator[C] = adjascentAndSelf.filter(_ != a)
       def adjascentAndSelf: Iterator[C] = cubeAt(a)(using this)
+      def multiple: Item = a.components.product
 
   object V:
     def apply[C: Vec]: Vec[C] = summon[Vec[C]]
