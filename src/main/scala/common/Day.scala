@@ -3,7 +3,7 @@ package common
 import scala.io.Source
 
 trait Day extends Product :
-  def star1(): Any
+  def star1(): Any = ???
 
   def star2(): Any = ???
 

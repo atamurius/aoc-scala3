@@ -4,5 +4,6 @@ import common.Runner
 
 object Main extends Runner(
   Day1,
-  Day2
+  Day2,
+  Day3,
 )
