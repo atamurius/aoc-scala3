@@ -9,11 +9,8 @@ object coord:
 
     val size: Int
 
-    def zip(a: C, b: C)(f: (Item, Item) => Item): C = build(for (a, b)
-
-    <- components(a) zip components(b)
-    yield f(a, b)
-    )
+    def zip(a: C, b: C)(f: (Item, Item) => Item): C =
+      build(for (a, b) <- components(a) zip components(b) yield f(a, b))
 
     extension (a: C)
       def components: Iterator[Item]
@@ -31,6 +28,10 @@ object coord:
       def adjascent: Iterator[C] = adjascentAndSelf.filter(_ != a)
       def adjascentAndSelf: Iterator[C] = cubeAt(a)(using this)
       def multiple: Item = a.components.product
+
+    extension (a: C)(using N: Integral[Item])
+      def /(f: Item): C = a.map(N.quot(_, f))
+      def unite: C = a / a.components.filter(_ != N.zero).map(N.abs).min
 
   object V:
     def apply[C: Vec]: Vec[C] = summon[Vec[C]]
