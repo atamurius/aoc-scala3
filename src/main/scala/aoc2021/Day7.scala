@@ -44,7 +44,6 @@ case object Day7 extends Day:
       then Seq(left.value, center.value, right.value).min
       else
         val l = center <+> -P.one
-        val r = center <+> P.one
         if l.value < center.value
         then iterate(left, left <|> center, center)
         else iterate(center, center <|> right, right)

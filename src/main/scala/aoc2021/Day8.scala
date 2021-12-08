@@ -17,64 +17,70 @@ case object Day8 extends Day:
       .map(_.toSet)
 
   val Sizes1478    = Set(1,4,7,8).map(Digits(_).size)
-  val DigitsBySize = Digits.zipWithIndex.groupBy(_._1.size).transform((_, rs) => rs.map(_._2).toSet)
+  val DigitsBySize = Digits.zipWithIndex.groupBy(_._1.size).transform((_, rs) => rs.map(_._1).toSet)
 
-  def solve(digits: Vector[String]) =
+  type Mapping[K, V] = Map[K, Set[V]]
+  extension[K, V] (m: Mapping[K, V])
+    def isStrict: Boolean = m.valuesIterator.forall(_.size == 1)
+    def isFailed: Boolean = m.valuesIterator.exists(_.isEmpty)
+    def collectStrict: Map[K, V] = m.collect { case (k, vs) if vs.size == 1 => k -> vs.head }
+    def optimize: Mapping[K, V] =
+      val strict = m.collectStrict.map((k,v) => (v,k))
+      m.transform { (k, vs) =>
+        val isUsedElsewhere = (m - k).valuesIterator.reduce(_ ++ _)
+        val notUsedElsewhere = vs filterNot isUsedElsewhere
+        if notUsedElsewhere.nonEmpty
+        then notUsedElsewhere
+        else vs.filter(strict.get(_).forall(_ == k))
+      }
+    def withStrict(k: K, v: V) = m + (k -> Set(v))
+    def withStrict(it: Iterable[(K, V)]) = m ++ it.map((k, v) => k -> Set(v))
+    def possibleValues(f: K => Boolean): Set[V] = m.view.filterKeys(f).valuesIterator.fold(Set.empty)(_ ++ _)
+
+  def solve(digits: Vector[String]): Map[String, Int] =
     def process(
-      possibleDigit: Vector[Set[Int]] = digits.map(d => DigitsBySize(d.size)),
-      solvedSegments: Map[Char, Char] = Map.empty
-    ): TailRec[Map[String, Int]] =
-      val possibleMapping = Segments
-        .map { segment =>
-          solvedSegments.get(segment) match
-            case Some(s) => segment -> Set(s)
-            case None =>
-              val possibles = for
-                (ds, i) <- possibleDigit.zipWithIndex if digits(i).contains(segment)
-              yield ds.flatMap(Digits(_)).toSet -- solvedSegments.values
-              segment -> possibles.reduce(_ intersect _)
-        }
-        .toMap
-//      println("---")
-//      println(s"substituted: ${solvedSegments.mkString(", ")}")
-//      for (ds, i) <- possibleDigit.zipWithIndex do println(s"$i: ${digits(i)} ? ${ds.mkString(", ")} = ${ds.map(i => Digits(i).mkString).mkString(", ")}")
-//      for (c, cs) <- possibleMapping do println(s"$c ? ${cs.mkString(", ")}")
-
-      val solved = (for (o, j) <- possibleDigit.zipWithIndex if o.size == 1 yield o.head -> j).toMap
-      if solved.size == digits.size then done(solved.map((correct, d) => digits(d) -> correct))
+      digitMapping: Mapping[String, Set[Char]] = digits.map(d => d -> DigitsBySize(d.length)).toMap,
+      strictSegments: Map[Char, Char] = Map.empty
+    ): Map[String, Int] =
+      if digitMapping.isStrict then digitMapping.collectStrict.transform((_, vs) => Digits.indexOf(vs))
       else
-        val updatedDigit = for (options, i) <- possibleDigit.zipWithIndex yield
-          if options.size == 1 then options
-          else
-            val usedOtherwise  = possibleDigit.updated(i, Set.empty).flatten.toSet
-            val onlyHere       = options.filterNot(usedOtherwise)
-            val updatedOptions =
-              if onlyHere.nonEmpty then onlyHere
-              else options.filter(o => !solved.contains(o))
-            val possibleSegments = digits(i).toSet.flatMap(possibleMapping)
-            updatedOptions.filter(o => Digits(o).forall(possibleSegments))
+        val segmentMapping = Segments
+          .map { segment =>
+            segment -> digitMapping.view.filterKeys(_ contains segment).values.map(_.flatten).reduce(_ intersect _)
+          }
+          .toMap
+          .withStrict(strictSegments)
+          .optimize
 
-        val additionalSolved = possibleMapping.collect {
-          case (c, cs) if !solvedSegments.contains(c) && cs.size == 1 => c -> cs.head
-        }
-        if updatedDigit.exists(_.isEmpty) || possibleMapping.exists(_._2.isEmpty) then done(Map.empty)
-        else if (updatedDigit != possibleDigit || additionalSolved.nonEmpty)
-          tailcall(process(updatedDigit, solvedSegments ++ additionalSolved))
-        else done(
-          possibleMapping
+        val updatedDigitMapping = digitMapping
+          .transform { (k, vs) =>
+            val allowedSegments = segmentMapping.possibleValues(k.contains)
+            vs.filter(_.forall(allowedSegments))
+          }
+          .optimize
+
+        if updatedDigitMapping.isFailed || segmentMapping.isFailed then Map.empty
+        else if updatedDigitMapping != digitMapping then
+          process(updatedDigitMapping, segmentMapping.collectStrict)
+        else
+          segmentMapping
             .toVector
+            .filter(_._2.size > 1)
             .sortBy(_._2.size)
             .iterator
             .flatMap { (segment, options) =>
               options.map { opt =>
-                process(updatedDigit, solvedSegments + (segment -> opt)).result
+                process(updatedDigitMapping, segmentMapping.withStrict(segment, opt).collectStrict)
               }
             }
             .find(_.nonEmpty)
             .getOrElse(Map.empty)
-        )
 
-    process().result
+    process()
+
+  def solve(entry: Entry): Int =
+    val mapping = solve(entry.digits).map((k, v) => k.sorted -> v)
+    entry.query.map(k => mapping(k.sorted)).mkString.toInt
 
   override def test(): Unit =
     val sample =
@@ -107,15 +113,22 @@ case object Day8 extends Day:
       "ab" -> 1
     )
 
-//    val sample3 = parse("gbeda bf fbgea dgafce fcgedb fgaec bcfa bfg baefgc dbfgace | fb cfba cbedfg afbc")
-//    solve(sample3.digits) shouldBe Map.empty
+    sample.map(solve) shouldBe Vector(
+      8394,
+      9781,
+      1197,
+      9361,
+      4873,
+      8418,
+      4548,
+      1625,
+      8717,
+      4315,
+    )
 
   override def star1(): Any = readInput(_.map(parse).map(_.countBySizes(Sizes1478)).sum)
 
   override def star2(): Any = readInput(_
-    .map { line =>
-      val entry = parse(line)
-      val mapping = solve(entry.digits).map((k, v) => k.sorted -> v)
-      entry.query.map(q => mapping(q.sorted)).mkString.toInt
-    }
-    .sum) // 989396
+    .map { line => solve(parse(line)) }
+    .sum
+  ) // 989396
