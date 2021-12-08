@@ -118,4 +118,4 @@ case object Day8 extends Day:
       val mapping = solve(entry.digits).map((k, v) => k.sorted -> v)
       entry.query.map(q => mapping(q.sorted)).mkString.toInt
     }
-    .sum)
+    .sum) // 989396
