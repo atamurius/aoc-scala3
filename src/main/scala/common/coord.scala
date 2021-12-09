@@ -17,6 +17,12 @@ object coord:
       def component(i: Int): Item = a.components.drop(i).next()
       def show: String = a.components.mkString("(", "; ", ")")
       def map(f: Item => Item): C = build(a.components map f)
+      def update(i: Int, item: Item): C = mapAt(i, _ => item)
+      def mapAt(i: Int, f: Item => Item): C =
+        build(components.zipWithIndex.map {
+          case (c, `i`) => f(c)
+          case (c,   _) => c
+        })
 
     extension (a: C)(using N: Numeric[Item])
       def +(b: C): C = zip(a, b)(N.plus)
@@ -27,6 +33,8 @@ object coord:
       def norm: Item = a.components.map(N.abs).sum
       def adjascent: Iterator[C] = adjascentAndSelf.filter(_ != a)
       def adjascentAndSelf: Iterator[C] = cubeAt(a)(using this)
+      def neighbours: Iterator[C] =
+        for d <- Iterator(N.one, N.negate(N.one)); i <- 0 until size yield a.mapAt(i, N.plus(_, d))
       def multiple: Item = a.components.product
 
     extension (a: C)(using N: Integral[Item])
