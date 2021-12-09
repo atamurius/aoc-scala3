@@ -19,12 +19,19 @@ object read:
     def width = lines.head.size
 
     def map[R](f: T => R) = Board(lines.map(_.map(f)))
+    def fill[R](value: => R) = map(_ => value)
 
     def get(p: Int2) = lines.lift(p.y).flatMap(_.lift(p.x))
+    def get(ps: IterableOnce[Int2]): Iterator[T] = ps.iterator.flatMap(get)
     def apply(p: Int2) = get(p).get
     def update(p: Int2, value: T) = copy(lines.updated(p.y, lines(p.y).updated(p.x, value)))
-    
-    def points: Iterator[(Int2, T)] = 
+    def update(ps: IterableOnce[(Int2, T)]) = copy(
+      ps.iterator.foldLeft(lines) {
+        case (ls, (p, t)) => ls.updated(p.y, ls(p.y).updated(p.x, t))
+      }
+    )
+
+    def points: Iterator[(Int2, T)] =
       for (row, y) <- lines.iterator.zipWithIndex
           (t, x) <- row.iterator.zipWithIndex
       yield Int2(x,y) -> t

@@ -3,12 +3,13 @@ package aoc2021
 import common.Day
 import common.read._
 import common.coord._
+import common._
 import scala.annotation.tailrec
 
 case object Day9 extends Day:
 
-  def lowPoints(board: Board[Int]) =
-    board.points.filter((p, h) => p.neighbours.flatMap(board.get).forall(_ > h))
+  def lowPoints(board: Board[Int]): Iterator[(Int2, Int)] =
+    board.points.filter((p, h) => board.get(p.neighbours).forall(_ > h))
 
   def parse(ls: Iterator[String]) = Board.read(ls, "".r).map(_.toInt)
 
@@ -16,30 +17,21 @@ case object Day9 extends Day:
 
   def flow(heights: Board[Int]): Board[Int] =
     val Max = 9
-    val Empty = 0
-    val start = lowPoints(heights).zipWithIndex.foldLeft(heights.map(_ => Empty)) {
-      case (bs, ((p, _), i)) => bs(p) = i + 1
-    }
-
-    @tailrec def process(basins: Board[Int]): Board[Int] =
-      val points = for
-        (p1, h1) <- heights.points if basins(p1) != Empty
-        p2 <- p1.neighbours
-        h2 = heights.get(p2).getOrElse(Max)
-        if h2 != Max && h2 > h1 && basins(p2) == Empty
-      yield p2 -> basins(p1)
-      val updated = points.foldLeft(basins) {
-        case (bs, (p, id)) => bs(p) = id
+    val Empty = -1
+    heights
+      .fill(Empty)
+      .update(lowPoints(heights).map(_._1).zipWithIndex)
+      .converge { basins =>
+        basins.update {
+          for
+            (sink, sinkH) <- heights.points if basins(sink) != Empty
+            p <- sink.neighbours if basins.get(p).contains(Empty)
+            hight <- heights.get(p) if hight < Max && hight > sinkH
+          yield p -> basins(sink)
+        }
       }
-      if updated == basins then basins
-      else process(updated)
 
-    process(start)
-
-  def basinSizes(basins: Board[Int]): Vector[Int] =
-    val map =basins.points.map(_._2)
-      .foldLeft(Map.empty[Int, Int] withDefaultValue 0)((acc, t) => acc + (t -> (acc(t) + 1)))
-    (map - 0).values.toVector.sortBy(-_)
+  def basinSizes(basins: Board[Int]): Vector[Int] = (basins.points.map(_._2).countItems - -1).values.toVector.sortBy(-_)
 
   override def test(): Unit =
     val sample =

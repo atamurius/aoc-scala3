@@ -2,6 +2,7 @@ package aoc2021
 
 import common.Day
 import common.coord.*
+import common._
 
 import scala.collection.Iterator.iterate
 
@@ -20,11 +21,6 @@ case object Day5 extends Day:
     private val Format = """(\d+),(\d+) -> (\d+),(\d+)""".r
     def parse: String => Line =
       case Format(ax, ay, bx, by) => Line(Int2(ax.toInt, ay.toInt), Int2(bx.toInt, by.toInt))
-
-  extension[T](it: IterableOnce[T]) def countItems: Map[T, Int] =
-    it.iterator.foldLeft(Map.empty[T, Int] withDefaultValue 0) { (acc, p) =>
-      acc + (p -> (acc(p) + 1))
-    }
 
   override def test(): Unit =
     val sample =
