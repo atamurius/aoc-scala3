@@ -17,6 +17,7 @@ object read:
   case class Board[T](lines: Vector[Vector[T]]):
     def height = lines.size
     def width = lines.head.size
+    def size = lines.iterator.map(_.size).sum
 
     def map[R](f: T => R) = Board(lines.map(_.map(f)))
     def fill[R](value: => R) = map(_ => value)
@@ -29,6 +30,13 @@ object read:
       ps.iterator.foldLeft(lines) {
         case (ls, (p, t)) => ls.updated(p.y, ls(p.y).updated(p.x, t))
       }
+    )
+    def transform(f: (Int2, T) => T): Board[T] = Board(
+      lines.iterator.zipWithIndex.map { (line, y) =>
+        line.iterator.zipWithIndex.map { (value, x) =>
+          f(Int2(x,y), value)
+        }.toVector
+      }.toVector
     )
 
     def points: Iterator[(Int2, T)] =
