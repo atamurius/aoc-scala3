@@ -42,7 +42,7 @@ object coord:
       def unite: C = a / a.components.filter(_ != N.zero).map(N.abs).min
 
   object V:
-    def apply[C: Vec]: Vec[C] = summon[Vec[C]]
+    def apply[C](using C: Vec[C]): C.type = C
 
   def zero[C](using V: Vec[C])(using N: Numeric[V.Item]): C = V.build(Iterator.continually(N.zero).take(V.size))
 
@@ -77,12 +77,19 @@ object coord:
       }
   // (2, 1) - left => (-1, 2)
 
+  def render2d(ps: Set[Int2]): Unit =
+    val (tl, br) = boundingBox(ps)
+    println()
+    for y <- tl.y to br.y do
+      val line = for x <- tl.x to br.x yield if ps(Int2(x,y)) then Color.bright("#") else Color.blue(".")
+      println(line.mkString(" "))
+    println()
 
   given Vec[Int2] with
     type Item = Int
     extension (v: Int2) def components: Iterator[Int] = Iterator(v.x, v.y)
 
-    def build(xs: IterableOnce[Int]): Int2 =
+    def build(xs: IterableOnce[Item]): Int2 =
       val it = xs.iterator
       Int2(it.next(), it.next())
 
