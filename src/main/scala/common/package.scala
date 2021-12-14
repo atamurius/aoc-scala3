@@ -14,4 +14,8 @@ package object common {
       acc + (p -> (acc(p) + 1))
     }
 
+  extension[T](it: Iterator[T]) def at(i: Int): T = it.drop(i).next()
+  
+  extension[K, V](map: Map[K, V])(using V: Numeric[V])
+    def plusAt(key: K, delta: V): Map[K, V] = map + (key -> V.plus(map.getOrElse(key, V.zero), delta))
 }
