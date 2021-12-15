@@ -17,4 +17,5 @@ object Main extends Runner(
   Day12,
   Day13,
   Day14,
+  Day15,
 )
