@@ -42,6 +42,13 @@ object coord:
       def %(f: Item): C = a.map(N.rem(_, f))
       def unite: C = a / a.components.filter(_ != N.zero).map(N.abs).min
 
+    extension (a: C)(using O: Ordering[Item])
+      def in(cube: (C, C)): Boolean =
+        import O._
+        (cube._1.components zip a.components zip cube._2.components).forall {
+          case ((l, m), r) => l <= m && m <= r
+        }
+  
   object V:
     def apply[C](using C: Vec[C]): C.type = C
 
