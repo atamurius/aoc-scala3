@@ -48,7 +48,7 @@ object coord:
         (cube._1.components zip a.components zip cube._2.components).forall {
           case ((l, m), r) => l <= m && m <= r
         }
-  
+
   object V:
     def apply[C](using C: Vec[C]): C.type = C
 

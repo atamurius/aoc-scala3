@@ -16,4 +16,10 @@ trait Day extends Product :
     try read(source.getLines())
     finally source.close()
 
+  protected final def readTest[T](name: String)(read: Iterator[String] => T): T =
+    val pkg    = getClass.getPackageName
+    val source = Source.fromResource(s"$pkg/${productPrefix}.$name.input")
+    try read(source.getLines())
+    finally source.close()
+
   def test(): Unit = ()

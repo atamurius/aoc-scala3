@@ -1,4 +1,6 @@
+import java.util.concurrent.TimeUnit
 import scala.annotation.tailrec
+import scala.concurrent.duration._
 
 package object common {
 
@@ -26,4 +28,13 @@ package object common {
         case Left(next) => collect(next)
         case Right(res) => res
     collect(t)
+    
+  def time[T](action: => T): T =
+    val start = System.nanoTime()
+    val res = action
+    val time = (System.nanoTime() - start).nanos
+    println(Color.blue(f"Time: ${time.toUnit(TimeUnit.SECONDS)}%.3fs"))
+    res
+
+  def findFirst[T](it: Iterator[T]): Option[T] = if it.hasNext then Some(it.next()) else None
 }

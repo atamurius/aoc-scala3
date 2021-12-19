@@ -14,10 +14,7 @@ abstract class Runner(allDays: Day*) {
 
   private def run(name: String)(action: => Any) =
     try
-      val start = System.nanoTime()
-      println(s"${Color.yellow(name)}: ${Color.green(action)}")
-      val time = (System.nanoTime() - start).nanos
-      println(Color.blue(f"Time: ${time.toUnit(TimeUnit.SECONDS)}%.3fs"))
+      println(s"${Color.yellow(name)}: ${Color.green(time(action))}")
       true
     catch
       case _: NotImplementedError =>
