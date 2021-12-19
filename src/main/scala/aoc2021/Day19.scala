@@ -1,9 +1,14 @@
 package aoc2021
 
-import common._
-import common.coord._
-import common.read._
+import common.*
+import common.coord.*
+import common.read.*
+
+import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.tailrec
+import scala.concurrent.*
+import scala.concurrent.ExecutionContext.Implicits.*
+import scala.concurrent.duration.Duration
 
 case object Day19 extends Day:
 
@@ -14,8 +19,14 @@ case object Day19 extends Day:
       case 0 => Int3( v.x, -v.z,  v.y)
       case 1 => Int3( v.z,  v.y, -v.x)
       case 2 => Int3(-v.y,  v.x,  v.z)
-    def rotate180(axis: Axis): Int3 = v.rotate90(axis).rotate90(axis)
-    def rotate270(axis: Axis): Int3 = v.rotate180(axis).rotate90(axis)
+    def rotate180(axis: Axis): Int3 = axis match
+      case 0 => Int3( v.x, -v.y, -v.z)
+      case 1 => Int3(-v.x,  v.y, -v.z)
+      case 2 => Int3(-v.x, -v.y,  v.z)
+    def rotate270(axis: Axis): Int3 = axis match
+      case 0 => Int3( v.x,  v.z, -v.y)
+      case 1 => Int3(-v.z,  v.y,  v.x)
+      case 2 => Int3( v.y, -v.x,  v.z)
 
   val allRotations: Seq[Int3 => Int3] =
     val rotations: Seq[Int3 => Int3] =
@@ -43,40 +54,46 @@ case object Day19 extends Day:
     title -> ps
   }.toMap
 
-  def align(first: Set[Int3], second: Set[Int3]): Option[(Set[Int3], Int3)] =
-    def ifOverlap(transform: Int3 => Int3): Option[Set[Int3]] =
+  def align(first: Set[Int3], secondRotations: Seq[Seq[Int3]]): Option[(Set[Int3], Int3)] =
+    def ifOverlap(second: Iterable[Int3], transform: Int3 => Int3): Option[Set[Int3]] =
       var notMatched = 0
-      var result = Set.empty[Int3]
+      var result = Vector.empty[Int3]
       for p <- second do
         val next = transform(p)
         if !first(next) then notMatched += 1
         if notMatched > (second.size - 12) then return None
-        else result += next
-      Some(result)
+        else result :+= next
+      Some(result.toSet)
 
-    findFirst {
+    findFirstAsync(secondRotations) { second =>
       for
-        rotate <- allRotations.iterator
         firstAncor <- first.iterator
-        secondAncor <- second.iterator
-        delta = firstAncor - rotate(secondAncor)
+        secondAncor <- second
+        delta = firstAncor - secondAncor
         if delta.components.exists(c => math.abs(c) > 1000)
-        aligned <- ifOverlap(rotate andThen (_ + delta))
+        aligned <- ifOverlap(second, _ + delta)
       yield (aligned, delta)
     }
 
-  @tailrec def locate(all: Map[String, Set[Int3]], found: Map[String, Int3]): Map[String, (Set[Int3], Int3)] =
+  def locate(all: Map[String, Set[Int3]], base: String = "scanner 0"): Map[String, (Set[Int3], Int3)] =
+    val Some(name, ps) = all.find(_._1 == base)
+    println(s"Started location based on $name")
+    val rotated = all.transform((_, ps) => allRotations.map(ps.toVector.map))
+    locate(rotated, Map(name -> (ps, zero[Int3])))
+
+  @tailrec def locate(all: Map[String, Seq[Seq[Int3]]], found: Map[String, (Set[Int3], Int3)]): Map[String, (Set[Int3], Int3)] =
     findFirst {
       for
         (scanner, ps) <- all.iterator if !found.contains(scanner)
-        (base, _) <- found
-        (aligned, location) <- align(all(base), ps)
+        (aligned, location) <- findFirstAsync(found) {
+          case (base, (basePs, _)) => align(basePs, ps)
+        }
       yield (scanner, location, aligned)
     } match
-      case None => found.transform((scanner, loc) => (all(scanner), loc))
+      case None => found
       case Some((scanner, location, aligned)) =>
         println(s"Located $scanner, ${found.size} in total")
-        locate(all + (scanner -> aligned), found + (scanner -> location))
+        locate(all, found + (scanner -> (aligned, location)))
 
   def maxDistance(s: Map[String, (Set[Int3], Int3)]) =
     val distances = for
@@ -92,7 +109,7 @@ case object Day19 extends Day:
     v.rotate270(2).rotate90(2) shouldBe v
 
     val test = readTest("test1")(parseInput)
-    val result = time(locate(test, Map("scanner 0" -> zero)))
+    val result = time(locate(test))
     result.map { case (s, (ps, l)) => s -> l } shouldBe Map(
       "scanner 0" -> zero[Int3],
       "scanner 1" -> Int3(68,-1246,-43),
@@ -105,10 +122,10 @@ case object Day19 extends Day:
 
   override def star1(): Any =
     val inp = readInput(parseInput)
-    val res = locate(inp, Map("scanner 0" -> zero))
+    val res = locate(inp)
     res.foldLeft(Set.empty[Int3])(_ ++ _._2._1).size
 
   override def star2(): Any =
     val inp = readInput(parseInput)
-    val res = locate(inp, Map("scanner 0" -> zero))
+    val res = locate(inp)
     maxDistance(res)
