@@ -77,7 +77,7 @@ case object Day19 extends Day:
 
   def locate(all: Map[String, Set[Int3]], base: String = "scanner 0"): Map[String, (Set[Int3], Int3)] =
     val Some(name, ps) = all.find(_._1 == base)
-    println(s"Started location based on $name")
+//    println(s"Started location based on $name")
     val rotated = all.transform((_, ps) => allRotations.map(ps.toVector.map))
     locate(rotated, Map(name -> (ps, zero[Int3])))
 
@@ -92,7 +92,7 @@ case object Day19 extends Day:
     } match
       case None => found
       case Some((scanner, location, aligned)) =>
-        println(s"Located $scanner, ${found.size} in total")
+//        println(s"Located $scanner, ${found.size} in total")
         locate(all, found + (scanner -> (aligned, location)))
 
   def maxDistance(s: Map[String, (Set[Int3], Int3)]) =
@@ -109,7 +109,7 @@ case object Day19 extends Day:
     v.rotate270(2).rotate90(2) shouldBe v
 
     val test = readTest("test1")(parseInput)
-    val result = time(locate(test))
+    val result = locate(test)
     result.map { case (s, (ps, l)) => s -> l } shouldBe Map(
       "scanner 0" -> zero[Int3],
       "scanner 1" -> Int3(68,-1246,-43),
