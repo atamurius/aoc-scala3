@@ -19,14 +19,14 @@ case object Day1 extends Day:
       yield first.toLong * second
     }
   
-  def solve2(expences: Vector[Int]): Option[Long] =
+  def solve2(expences: Vector[Int]): Option[(Long, Int, Int, Int)] =
     val available = expences.toSet
     firstOf {
       for
         first <- anyOf(expences) if first < 2019
         second <- anyOf(expences)
         third = 2020 - first - second if available(third)
-      yield first.toLong * second * third
+      yield (first.toLong * second * third, first, second, third)
     }
 
   override def test(): Unit =
@@ -40,8 +40,8 @@ case object Day1 extends Day:
         |1456""".stripMargin.trim.linesIterator
     )
     solve1(sample) shouldBe Some(514579)
-    solve2(sample) shouldBe Some(241861950)
+    solve2(sample) shouldBe Some((241861950, 979, 366, 675))
 
   override def star1(): Any = solve1(readInput(parse))
 
-  override def star2(): Unit = solve2(readInput(parse))
+  override def star2(): Any = solve2(readInput(parse))

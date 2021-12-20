@@ -21,7 +21,7 @@ abstract class Runner(allDays: Day*) {
         println(s"${Color.yellow(name)}: ${Color.red("NOT IMPLEMENTED")}")
         false
 
-  def main(days: Array[String]): Unit =
+  def main(args: Array[String]): Unit =
     var failed = false
     for day <- allDays do
       val wait = Promise[Unit]
@@ -54,6 +54,11 @@ abstract class Runner(allDays: Day*) {
 
     if failed then sys.exit(1)
 
+    val (runBoth, days) =
+      if args.headOption.contains("--both")
+      then (true, args.tail)
+      else (false, args)
+
     val daysToShow =
       if days.isEmpty then Seq(allDays.last.productPrefix)
       else if days.toList == List("*") then allDays.map(_.productPrefix)
@@ -63,7 +68,8 @@ abstract class Runner(allDays: Day*) {
       allDays.find(_.productPrefix equalsIgnoreCase day) match
         case None => println(Color.red(s"Unknown day: $day"))
         case Some(dayObj) =>
-          if !run("Star 2")(dayObj.star2()) then
+          if runBoth then run("Star 1")(dayObj.star1())
+          if !run("Star 2")(dayObj.star2()) && !runBoth then
             run("Star 1")(dayObj.star1())
       println()
 }

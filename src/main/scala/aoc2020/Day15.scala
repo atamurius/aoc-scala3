@@ -55,7 +55,7 @@ case object Day15 extends Day:
     val mg = new MutableGame("0,3,6")
     mg.stepTo(2020).number shouldBe 436
 
-  val input = "18,8,0,5,4,1,20"
+  val input = "0,5,4,1,10,14,7"
   
   override def star1(): Any = new Game(input).numberAt(2020)
 

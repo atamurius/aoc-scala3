@@ -54,14 +54,14 @@ case object Day17 extends Day:
     
   val input =
     """
-      |##..#.#.
-      |#####.##
-      |#######.
-      |#..#..#.
-      |#.#...##
-      |..#....#
-      |....#..#
-      |..##.#..
+      |###...#.
+      |.##.####
+      |.####.##
+      |###.###.
+      |.##.####
+      |#.##..#.
+      |##.####.
+      |.####.#.
       |""".stripMargin.trim.linesIterator.toVector
 
   override def star1(): Any = parse[Int3](input).cycles.drop(6).next().active.size

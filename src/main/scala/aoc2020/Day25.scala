@@ -21,6 +21,6 @@ case object Day25 extends Day:
     val aSteps = brutSteps(a)
     iterate(b)(step(_, b)).drop(aSteps - 1).next()
   
-  val input = (12090988L, 240583L)
+  val input = (14082811L, 5249543L)
   
   override def star1(): Any = encryptionKey.tupled(input)

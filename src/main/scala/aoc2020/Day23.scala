@@ -112,7 +112,7 @@ case object Day23 extends Day:
         next()
       this
 
-  val input = "157623984"
+  val input = "789465123"
   
   override def star1(): Any = new Game(input).after(100).canonical
   
