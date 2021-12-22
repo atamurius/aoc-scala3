@@ -25,6 +25,13 @@ package object common {
   extension[K, V](map: Map[K, V])(using V: Numeric[V])
     def plusAt(key: K, delta: V): Map[K, V] = map + (key -> V.plus(map.getOrElse(key, V.zero), delta))
 
+  extension[K, V](map: Map[K, V])
+    def merge(that: Map[K, V])(m: (V, V) => V): Map[K, V] =
+      map.foldLeft(that) {
+        case (acc, (key, value)) => 
+          acc.updated(key, acc.get(key).fold(value)(m(_, value)))
+      }
+
   extension[T](t: T) def accumulate[R](f: T => Either[T, R]): R =
     @tailrec def collect(acc: T): R =
       f(acc) match
