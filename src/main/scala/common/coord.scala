@@ -9,6 +9,8 @@ object coord:
 
     val size: Int
 
+    def axes: Range = 0 until size
+
     def zip(a: C, b: C)(f: (Item, Item) => Item): C =
       build(for (a, b) <- components(a) zip components(b) yield f(a, b))
 
@@ -17,6 +19,7 @@ object coord:
       def component(i: Int): Item = a.components.drop(i).next()
       def show: String = a.components.mkString("(", "; ", ")")
       def map(f: Item => Item): C = build(a.components map f)
+      def mapWithIndex(f: (Item, Int) => Item): C = build(a.components.zipWithIndex map f.tupled)
       def update(i: Int, item: Item): C = mapAt(i, _ => item)
       def mapAt(i: Int, f: Item => Item): C =
         build(components.zipWithIndex.map {
@@ -34,7 +37,7 @@ object coord:
       def adjascent: Iterator[C] = adjascentAndSelf.filter(_ != a)
       def adjascentAndSelf: Iterator[C] = cubeAt(a)(using this)
       def neighbours: Iterator[C] =
-        for d <- Iterator(N.one, N.negate(N.one)); i <- 0 until size yield a.mapAt(i, N.plus(_, d))
+        for d <- Iterator(N.one, N.negate(N.one)); i <- axes yield a.mapAt(i, N.plus(_, d))
       def multiple: Item = a.components.product
 
     extension (a: C)(using N: Integral[Item])
@@ -74,6 +77,15 @@ object coord:
         V.zip(max, x)(N.max)
       )
     }
+
+  given Vec[Int] with
+    type Item = Int
+
+    extension (v: Int) def components: Iterator[Int] = Iterator(v)
+
+    def build(xs: IterableOnce[Item]): Int = xs.iterator.next()
+
+    val size: Int = 1
 
   case class Int2(x: Int, y: Int):
     override def toString: String = this.show
