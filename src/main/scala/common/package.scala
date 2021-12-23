@@ -46,7 +46,9 @@ package object common {
     println(Color.blue(f"Time: ${time.toUnit(TimeUnit.SECONDS)}%.3fs"))
     res
 
-  def findFirst[T](it: Iterator[T]): Option[T] = if it.hasNext then Some(it.next()) else None
+  def findFirst[T](it: IterableOnce[T]): Option[T] =
+    val i = it.iterator  
+    if i.hasNext then Some(i.next()) else None
 
   def findFirstAsync[A, B](chunks: Iterable[A])(f: A => IterableOnce[B]): Option[B] =
     val promise = Promise[Option[B]]

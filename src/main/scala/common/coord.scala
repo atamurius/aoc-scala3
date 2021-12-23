@@ -97,11 +97,15 @@ object coord:
       }
   // (2, 1) - left => (-1, 2)
 
-  def render2d(ps: Set[Int2]): Unit =
+  private def simpleRender: Int2 => String = _ => Color.bright("#")
+
+  def render2d(ps: Set[Int2], render: Int2 => String = simpleRender): Unit =
     val (tl, br) = boundingBox(ps)
     println()
     for y <- tl.y to br.y do
-      val line = for x <- tl.x to br.x yield if ps(Int2(x,y)) then Color.bright("#") else Color.blue(".")
+      val line = for x <- tl.x to br.x yield
+        val p = Int2(x,y)
+        if ps(p) then render(p) else Color.blue(".")
       println(line.mkString(" "))
     println()
 

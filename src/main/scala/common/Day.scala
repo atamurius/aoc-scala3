@@ -1,5 +1,6 @@
 package common
 
+import scala.concurrent.duration._
 import scala.io.Source
 
 trait Day extends Product :
@@ -7,6 +8,8 @@ trait Day extends Product :
 
   def star2(): Any = ???
 
+  val timeout: FiniteDuration = 5.seconds
+  
   extension[T] (actual: T) protected inline def shouldBe(expected: T): Unit =
     if (actual != expected) throw new AssertionError(s"Expected $expected\nbut got $actual")
 

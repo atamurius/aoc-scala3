@@ -34,7 +34,7 @@ abstract class Runner(allDays: Day*) {
             wait.failure(t)
       }
       val test = ForkJoinPool.commonPool().submit(action)
-      try Await.result(wait.future, 5.seconds)
+      try Await.result(wait.future, day.timeout)
       catch
         case _: TimeoutException =>
           test.cancel(true)
