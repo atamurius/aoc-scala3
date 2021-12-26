@@ -43,6 +43,7 @@ object coord:
     extension (a: C)(using N: Integral[Item])
       def /(f: Item): C = a.map(N.quot(_, f))
       def %(f: Item): C = a.map(N.rem(_, f))
+      def |%|(b: C): C = zip(a, b)(N.rem)
       def unite: C = a / a.components.filter(_ != N.zero).map(N.abs).min
 
     extension (a: C)(using O: Ordering[Item])
