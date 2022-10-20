@@ -2,10 +2,12 @@ package aoc2020
 
 import common.Day
 
+import scala.annotation.nowarn
+
 case object Day10 extends Day:
 
   def numbers(lines: Iterator[String]) = lines.map(_.toInt).toVector
-  
+
   def diffs(xs: Vector[Int]): Map[Int, Int] =
     val ns = xs.sorted
     (0 +: ns :+ (ns.last + 3))
@@ -14,17 +16,18 @@ case object Day10 extends Day:
         case (acc, Seq(a, b)) =>
           val d = b - a
           acc + (d -> (acc(d) + 1))
+        case _ => ???
       }
-  
+
   case class Combinations(suffix1: Int, suffix2: Int, suffix3: Int):
     def total: Int = suffix1 + suffix2 + suffix3
-  
+
   def combinations(strade: Int): Combinations =
     if strade == 1 then Combinations(1, 0, 0)
-    else 
+    else
       val Combinations(s1, s2, s3) = combinations(strade - 1)
       Combinations(s1 + s2 + s3, s1, s2)
-  
+
   def waysToCombine(xs: Vector[Int]): Seq[Int] =
     (0 +: xs.sorted :+ (xs.max + 3))
       .iterator
@@ -34,9 +37,10 @@ case object Day10 extends Day:
         case ((current, list), 1) => (current + 1, list)
         case ((0, list), 3) => (0, list)
         case ((current, list), 3) => (0, combinations(current).total :: list)
+        case _ => ???
       }
       ._2.reverse
-  
+
   override def test(): Unit =
     // a - b
     combinations(1).total shouldBe 1
@@ -71,11 +75,11 @@ case object Day10 extends Day:
         |12
         |4
         |""".stripMargin.trim.linesIterator)
-  
+
     diffs(sample1) shouldBe Map(1 -> 7, 3 -> 5)
     waysToCombine(sample1) shouldBe Seq(1, 4, 2, 1)
     waysToCombine(sample1).product shouldBe 8
-  
+
     val sample2 = numbers(
       """
         |28
@@ -112,7 +116,7 @@ case object Day10 extends Day:
     diffs(sample2) shouldBe Map(1 -> 22, 3 -> 10)
     waysToCombine(sample2).product shouldBe 19208
 
-  override def star1(): Any = 
+  override def star1(): Any =
     val res = diffs(readInput(numbers))
     println(res)
     res(1) * res(3)
