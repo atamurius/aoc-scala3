@@ -10,9 +10,6 @@ trait Day extends Product:
 
   val timeout: FiniteDuration = 5.seconds
 
-  extension[T] (actual: T) protected inline def shouldBe(expected: T): Unit =
-    if (actual != expected) throw new AssertionError(s"Expected $expected\nbut got $actual")
-
   /** Reads `$package/$day.input` */
   protected final def readInput[T](read: Iterator[String] => T): T =
     val pkg    = getClass.getPackageName
@@ -28,3 +25,13 @@ trait Day extends Product:
     finally source.close()
 
   def test(): Unit = ()
+
+  extension[T] (actual: T)
+    protected inline def shouldBe(expected: T): T =
+      if (actual != expected) throw new AssertionError(s"Expected $expected\nbut got $actual")
+      else actual
+
+  protected def samplesOf[A, B](f: A => B)(cases: (A, B)*): Unit =
+    for (input, expected) <- cases do
+      val result = f(input)
+      if (result != expected) throw new AssertionError(s"Expected $expected for $input\n but got $result")

@@ -6,10 +6,8 @@ if [ -z "$1" ]; then
   echo "Available solutions:"
   for aoc in src/main/scala/aoc*; do
     echo $(basename "${aoc}"):
-    for day in ${aoc}/Day*.scala; do
-      echo -n " $(echo "${day}" | grep -o "Day[0-9]*")"
-    done
-    echo
+    DAYS=$(ls -1 ${aoc}/Day*.scala | grep -o "Day[0-9]*" | sort -V | tr '\n' ' ')
+    echo "  ${DAYS}"
   done
   exit 2
 fi

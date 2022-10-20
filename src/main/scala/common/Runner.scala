@@ -12,7 +12,7 @@ import scala.util.control.NonFatal
 
 abstract class Runner(allDays: Day*) {
 
-  private def run(name: String)(action: => Any) =
+  private def run(name: String)(action: => Any): Boolean =
     try
       println(s"${Color.yellow(name)}: ${Color.green(time(action))}")
       true
@@ -20,6 +20,17 @@ abstract class Runner(allDays: Day*) {
       case _: NotImplementedError =>
         println(s"${Color.yellow(name)}: ${Color.red("NOT IMPLEMENTED")}")
         false
+      case error: AssertionError =>
+        println(Color.red(s"Failure: ${error.getMessage}"))
+        renderTrace(error)
+        true
+
+  private def renderTrace(e: Throwable): Unit =
+    val pkg = getClass.getPackageName
+    e.getStackTrace.iterator.filter(_.getClassName.startsWith(s"$pkg.Day")).foreach { s =>
+      val cursor = s"src/main/scala/$pkg/${s.getFileName}:${s.getLineNumber}"
+      println(Color.red(s"at ${s.getClassName.stripSuffix("$")} ($cursor)"))
+    }
 
   def main(args: Array[String]): Unit =
     var failed = false
@@ -42,10 +53,7 @@ abstract class Runner(allDays: Day*) {
           failed = true
         case e: ExecutionException if e.getCause.isInstanceOf[AssertionError] =>
           println(Color.red(s"$day test failed:\n${e.getCause.getMessage}"))
-          val pkg = getClass.getPackageName
-          e.getCause.getStackTrace.iterator.find(_.getClassName.startsWith(s"$pkg.Day")).foreach { s =>
-            println(Color.red(s"at ${s.getClassName.stripSuffix("$")} (${s.getFileName}:${s.getLineNumber})"))
-          }
+          renderTrace(e.getCause)
           failed = true
         case e: ExecutionException =>
           println(Color.red(s"$day test failed:"))
