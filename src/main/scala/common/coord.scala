@@ -71,7 +71,7 @@ object coord:
       .map(_.reverse)
       .map(V.build)
 
-  def boundingBox[C](xs: Iterable[C])(using V: Vec[C])(using N: Numeric[V.Item]): (C, C) =
+  def boundingBox[C](xs: Iterable[C])(using V: Vec[C])(using N: Ordering[V.Item]): (C, C) =
     xs.foldLeft(xs.head, xs.head) {
       case ((min, max), x) => (
         V.zip(min, x)(N.min),

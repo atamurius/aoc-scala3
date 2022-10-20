@@ -27,10 +27,6 @@ object IntCode:
 
   type Program = Vector[Int]
 
-  enum State:
-    case Ok
-    case Halted
-
   case class Machine(code: Program, pointer: Int = 0):
     def changeCode(f: Program => Program) = copy(f(code))
     def changePointer(f: Int => Int) = copy(pointer = f(pointer))
@@ -39,6 +35,10 @@ object IntCode:
     def run: Machine = Machine.run(this)._2
 
   object Machine:
+    enum State:
+      case Ok
+      case Halted
+  
     def binaryOp(op: (Int, Int) => Int): IO[State] =
       for _ <- Change.readNext
           a <- Change.readNext flatMap Read.at
