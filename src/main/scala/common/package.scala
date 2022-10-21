@@ -26,10 +26,12 @@ package object common {
     def plusAt(key: K, delta: V): Map[K, V] = map + (key -> V.plus(map.getOrElse(key, V.zero), delta))
 
   extension[K, V](map: Map[K, V])
+    def putMerge(key: K, value: V)(merge: (V, V) => V): Map[K, V] =
+      map.updated(key, map.get(key).fold(value)(merge(_, value)))
+      
     def merge(that: Map[K, V])(m: (V, V) => V): Map[K, V] =
       map.foldLeft(that) {
-        case (acc, (key, value)) => 
-          acc.updated(key, acc.get(key).fold(value)(m(_, value)))
+        case (acc, (key, value)) => acc.putMerge(key, value)(m)
       }
 
   extension[T](t: T) def accumulate[R](f: T => Either[T, R]): R =
