@@ -8,6 +8,7 @@ case object Day4 extends Day:
 
   sealed trait Password:
     import Password.*
+    def left: Password = Zero
     def right: Int = 0
 
     override def toString: String = this match
@@ -25,6 +26,12 @@ case object Day4 extends Day:
       case Zero => false
       case NonEmpty(left, x) => x == left.right || left.hasDouble
 
+    def hasIsolatedDouble(rightRight: Int = 0): Boolean = this match
+      case Zero => false
+      case NonEmpty(left, right) =>
+        val current = right != rightRight && right == left.right && right != left.left.right
+        current || left.hasIsolatedDouble(right)
+
     def padRight(len: Int, digit: Int): Password =
       if len <= 0 then this
       else NonEmpty(this, digit).padRight(len - 1, digit)
@@ -32,7 +39,7 @@ case object Day4 extends Day:
   object Password:
     case object Zero extends Password
     // 1234 :: 5
-    case class NonEmpty(left: Password, override val right: Int) extends Password:
+    case class NonEmpty(override val left: Password, override val right: Int) extends Password:
       require(right >= 0 && right <= 9, s"$right must be a digit")
       require(left.right <= right, s"$left <= $right")
 
@@ -69,7 +76,11 @@ case object Day4 extends Day:
     Password("122").hasDouble shouldBe true
     Password("11").hasDouble shouldBe true
     Password("1223").hasDouble shouldBe true
+    Password("123444").hasIsolatedDouble() shouldBe false
+    Password("111122").hasIsolatedDouble() shouldBe true
 
   def inputRange = Password.range("240920", "789857")
 
   override def star1(): Any = inputRange.count(_.hasDouble) shouldBe 1154
+
+  override def star2(): Any = inputRange.count(_.hasIsolatedDouble()) shouldBe 750

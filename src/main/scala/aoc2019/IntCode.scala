@@ -1,25 +1,19 @@
 package aoc2019
 
+import common.*
+
 object IntCode:
-  type IO[+T] = Machine => (T, Machine)
 
-  def just[T](t: T): IO[T] = (t, _)
-
-  extension[A](a: IO[A])
-    def map[B](f: A => B): IO[B] = a(_) match
-      case (a, m) => (f(a), m)
-    def flatMap[B](f: A => IO[B]) = a(_: Machine) match
-      case (a, m) => f(a)(m)
-    def <*(b: IO[Any]): IO[A] = for a <- a; _ <- b yield a
+  object IO extends StatefulIO[Machine]
+  import IO.*
 
   object Read:
-    val state: IO[Machine] = m => (m, m)
     val pointer: IO[Int] = state.map(_.pointer)
     def at(addr: Int): IO[Int] = state.map(_.code(addr))
     def currentOp: IO[OpCode] = pointer.flatMap(at).map(OpCode.parse)
 
   object Change:
-    def apply(f: Machine => Machine): IO[Unit] = m => ((), f(m))
+    def apply(f: Machine => Machine): IO[Unit] = state.map(f).flatMap(replace)
     def jump(p: Int): IO[Unit] = Change(_.copy(pointer = p))
     def jumpRel(delta: Int): IO[Unit] = Change(_.changePointer(_ + delta))
     val readNext: IO[Int] = Read.pointer <* jumpRel(1) flatMap Read.at
@@ -38,7 +32,7 @@ object IntCode:
     enum State:
       case Ok
       case Halted
-  
+
     def binaryOp(op: (Int, Int) => Int): IO[State] =
       for _ <- Change.readNext
           a <- Change.readNext flatMap Read.at
@@ -47,12 +41,12 @@ object IntCode:
       yield State.Ok
 
     val step: IO[State] = Read.currentOp.flatMap {
-      case OpCode.Halt => just(State.Halted)
+      case OpCode.Halt => pure(State.Halted)
       case OpCode.Add  => binaryOp(_ + _)
       case OpCode.Mul  => binaryOp(_ * _)
     }
     val run: IO[Unit] = step.flatMap {
-      case State.Halted => just(())
+      case State.Halted => pure(())
       case State.Ok     => run
     }
 
