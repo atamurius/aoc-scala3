@@ -96,6 +96,8 @@ object IntCode:
     override def toString: String = s"[$pointer] ${code mkString ","}"
     def run: Machine = Machine.run(this)._2
     def runIO(input: Int*): Vector[Int] = Machine.runIO(input.toList)(this)._1
+    def withInput(p: Int) = Machine.runUntil { case State.Input(addr) => Change.writeAt(addr, p) }(this)._2
+    def runToOutput = Machine.runUntil { case State.Output(x) => pure(x) }(this)
 
   def machine(program: String) = Machine(program.split(",").toVector.map(_.toInt))
 

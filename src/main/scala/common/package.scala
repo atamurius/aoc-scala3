@@ -28,7 +28,7 @@ package object common {
   extension[K, V](map: Map[K, V])
     def putMerge(key: K, value: V)(merge: (V, V) => V): Map[K, V] =
       map.updated(key, map.get(key).fold(value)(merge(_, value)))
-      
+
     def merge(that: Map[K, V])(m: (V, V) => V): Map[K, V] =
       map.foldLeft(that) {
         case (acc, (key, value)) => acc.putMerge(key, value)(m)
@@ -49,7 +49,7 @@ package object common {
     res
 
   def findFirst[T](it: IterableOnce[T]): Option[T] =
-    val i = it.iterator  
+    val i = it.iterator
     if i.hasNext then Some(i.next()) else None
 
   def findFirstAsync[A, B](chunks: Iterable[A])(f: A => IterableOnce[B]): Option[B] =
