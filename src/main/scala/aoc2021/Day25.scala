@@ -37,6 +37,7 @@ case object Day25 extends Day:
     render2d(cs.keySet + zero[Int2] + (bounds - Int2(1,1)), p => cs.get(p).fold(".") {
       case Dir.E => Color.green(">")
       case Dir.N => Color.yellow("v")
+      case other => throw new MatchError(other)
     })
 
   override def test(): Unit =

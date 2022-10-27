@@ -38,7 +38,7 @@ case object Day17 extends Day:
   def parse[V](lines: IterableOnce[String])(using V: Vec[V] { type Item = Int }): Cubes[V] =
     val active = for 
       (line, y) <- lines.iterator.zipWithIndex
-      ('#', x) <- line.iterator.zipWithIndex
+      case ('#', x) <- line.iterator.zipWithIndex
     yield V.build(Iterator(x, y) ++ Iterator.continually(0))
     Cubes(active.toSet)
   

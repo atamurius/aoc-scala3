@@ -91,6 +91,6 @@ case object Day9 extends Day:
   override def star1(): Option[Long] = readInput(ns => findAnomaly(ns.map(_.toLong), 25))
 
   override def star2(): Any =
-    val Some(sum) = star1()
+    val sum = star1().get
     readInput(ns => findInterval(ns.map(_.toLong), sum))
       .map(xs => xs.min + xs.max)

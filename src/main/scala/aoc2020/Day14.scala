@@ -71,7 +71,7 @@ case object Day14 extends Day:
     val masked = (Bits(value).zeroPad zip mask).map[Seq[Bit]] {
       case (x, Some(0)) => Seq(Bit(x))
       case (_, Some(1)) => Seq(Bits.One)
-      case (_, None) => Bits.Any
+      case _            => Bits.Any
     }
     floating(masked).map { (xs: IterableOnce[Bit]) => Bits.unapply(xs) }
   

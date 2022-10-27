@@ -99,9 +99,9 @@ case object Day3 extends Day:
     )
 
   override def star1(): Any =
-    val first :: second :: Nil = readInput(_.map(parseWire).toList)
+    val first :: second :: Nil = readInput(_.map(parseWire).toList): @unchecked
     closestIntersection(first, second).map(_.norm) shouldBe Some(806)
 
   override def star2(): Any =
-    val first :: second :: Nil = readInput(_.map(parseWire).toList)
+    val first :: second :: Nil = readInput(_.map(parseWire).toList): @unchecked
     fastestIntersection(first, second).map(_._2) shouldBe Some(66076)

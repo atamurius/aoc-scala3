@@ -76,7 +76,7 @@ case object Day19 extends Day:
     }
 
   def locate(all: Map[String, Set[Int3]], base: String = "scanner 0"): Map[String, (Set[Int3], Int3)] =
-    val Some(name, ps) = all.find(_._1 == base)
+    val (name, ps) = all.find(_._1 == base).get
 //    println(s"Started location based on $name")
     val rotated = all.transform((_, ps) => allRotations.map(ps.toVector.map))
     locate(rotated, Map(name -> (ps, zero[Int3])))

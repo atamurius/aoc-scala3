@@ -35,10 +35,10 @@ object IntCode:
     case Eql extends OpCode(8)
 
   object OpCode:
-    def parse(code: Int) = values.find(_.code == code % 100).getOrElse(sys.error(s"Unknown opcode $code"))
+    def parse(code: Int): OpCode = values.find(_.code == code % 100).getOrElse(sys.error(s"Unknown opcode $code"))
 
     private def binaryOp(op: (Int, Int) => Int): IO[State] =
-      for a :: b :: Nil <- Arg.read(2)
+      for case a :: b :: Nil <- Arg.read(2)
           _ <- Arg.write(op(a, b))
       yield State.Continue
 

@@ -107,7 +107,7 @@ case object Day23 extends Day:
 
   def moveToRoom(start: Pos): M[Unit] =
     for
-      Some(amp) <- whoIsAt(start)
+      case Some(amp) <- whoIsAt(start)
       _ <- ensureNothingAbove(start)
       room <- someRoomOf(amp)
       _ <- ensureEmpty(room)

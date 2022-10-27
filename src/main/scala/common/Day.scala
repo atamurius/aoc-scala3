@@ -27,10 +27,12 @@ trait Day extends Product:
   def test(): Unit = ()
 
   extension[T] (actual: T)
+    @throws[AssertionError]
     protected inline def shouldBe(expected: T): T =
       if (actual != expected) throw new AssertionError(s"Expected $expected\nbut got $actual")
       else actual
 
+  @throws[AssertionError]
   protected def samplesOf[A, B](f: A => B)(cases: (A, B)*): Unit =
     for (input, expected) <- cases do
       val result = f(input)
