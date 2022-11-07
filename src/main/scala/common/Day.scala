@@ -1,7 +1,8 @@
 package common
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import scala.io.Source
+import scala.util.control.NonFatal
 
 trait Day extends Product:
   def star1(): Any = ???
@@ -35,5 +36,10 @@ trait Day extends Product:
   @throws[AssertionError]
   protected def samplesOf[A, B](f: A => B)(cases: (A, B)*): Unit =
     for (input, expected) <- cases do
-      val result = f(input)
+      val result = try f(input)
+      catch {
+        case NonFatal(e) =>
+          println(Color.red(s"Error while sampling $input:"))
+          throw e
+      }
       if (result != expected) throw new AssertionError(s"Expected $expected for $input\n but got $result")

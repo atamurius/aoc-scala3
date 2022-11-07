@@ -14,6 +14,7 @@ trait StatefulIO[S]:
     def as[B](b: B): IO[B] = map(_ => b)
     def void: IO[Unit] = as(())
     def withFilter(f: A => Boolean): IO[A] = map(a => if f(a) then a else throw MatchError(a))
+    def when(condition: Boolean): IO[Unit] = if condition then a.void else pure(())
 
   def pure[T](t: T): IO[T] = (t, _)
   def state: IO[S] = s => (s, s)
