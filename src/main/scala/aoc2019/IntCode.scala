@@ -12,19 +12,23 @@ object IntCode:
   import IO.*
 
   type Addr = Int
+  type Val = Long
+  def asAddr(v: Val): Addr = v.toInt match
+    case x if x < 0 => sys.error(s"Invalid address: $v")
+    case x => x
 
   object Read:
     val pointer: IO[Addr] = state.map(_.pointer)
-    def at(addr: Addr): IO[Int] = state.map(_.code.getOrElse(addr, 0))
-    def atRelative(addr: Addr): IO[Int] = state.map(m => m.code.getOrElse(addr + m.relativeBase, 0))
+    def at(addr: Addr): IO[Val] = state.map(_.code.getOrElse(addr, 0))
+    def atRelative(addr: Val): IO[Val] = state.map(m => m.code.getOrElse(asAddr(addr + m.relativeBase), 0))
     def relativeBase: IO[Addr] = state.map(_.relativeBase)
 
   object Change:
     def apply(f: Machine => Machine): IO[Unit] = state.map(f).flatMap(replace)
     def jump(p: Addr): IO[Unit] = Change(_.copy(pointer = p))
     def jumpRel(delta: Int): IO[Unit] = Change(_.changePointer(_ + delta))
-    val readNext: IO[Int] = Read.pointer <* jumpRel(1) flatMap Read.at
-    def writeAt(addr: Addr, value: Int): IO[Unit] = Change(_.changeCode(_.updated(addr, value)))
+    val readNext: IO[Val] = Read.pointer <* jumpRel(1) flatMap Read.at
+    def writeAt(addr: Addr, value: Val): IO[Unit] = Change(_.changeCode(_.updated(addr, value)))
 
   enum OpCode(val code: Int):
     case Hlt extends OpCode(99)
@@ -39,9 +43,9 @@ object IntCode:
     case Arb extends OpCode(9)
 
   object OpCode:
-    def parse(code: Int): OpCode = values.find(_.code == code % 100).getOrElse(sys.error(s"Unknown opcode $code"))
+    def parse(code: Val): OpCode = values.find(_.code == code % 100).getOrElse(sys.error(s"Unknown opcode $code"))
 
-    private def binaryOp(op: (Int, Int) => Int): IO[State] =
+    private def binaryOp(op: (Val, Val) => Val): IO[State] =
       for case a :: b :: c :: Nil <- Arg(3)
           a <- a.read()
           b <- b.read()
@@ -54,51 +58,51 @@ object IntCode:
       case OpCode.Hlt => pure(State.Halted)
       case OpCode.Add => binaryOp(_ + _)
       case OpCode.Mul => binaryOp(_ * _)
-      case OpCode.Inp => Arg.none *> Change.readNext.map(State.Input(_))
+      case OpCode.Inp => Arg.none *> Change.readNext.map(asAddr).map(State.Input(_))
       case OpCode.Out => Arg.single.flatMap(_.read()).map(State.Output(_))
       case OpCode.Jnz =>
         for case x :: addr :: Nil <- Arg(2)
           x <- x.read()
-          _ <- (addr.read() >>= Change.jump).when(x != 0)
+          _ <- (addr.read().map(asAddr) >>= Change.jump).when(x != 0)
           yield State.Continue
       case OpCode.Jiz =>
       for case x :: addr :: Nil <- Arg(2)
           x <- x.read()
-          _ <- (addr.read() >>= Change.jump).when(x == 0)
+          _ <- (addr.read().map(asAddr) >>= Change.jump).when(x == 0)
       yield State.Continue
       case OpCode.Ltn => binaryOp { (a, b) => if a < b then 1 else 0 }
       case OpCode.Eql => binaryOp { (a, b) => if a == b then 1 else 0 }
       case OpCode.Arb => Arg.single.flatMap(_.read()).flatMap { x =>
-        Change(m => m.copy(relativeBase = m.relativeBase + x)).as(State.Continue)
+        Change(m => m.copy(relativeBase = m.relativeBase + asAddr(x))).as(State.Continue)
       }
 
   enum State:
     case Continue
     case Halted
     case Input(address: Addr)
-    case Output(value: Int)
+    case Output(value: Val)
 
-  type Program = collection.immutable.SortedMap[Addr, Int]
+  type Program = collection.immutable.SortedMap[Addr, Val]
 
   enum ArgType:
     case Position
     case Immediate
     case Relative
 
-  case class Arg(value: Int, argType: ArgType):
-    def read(): IO[Int] = argType match
+  case class Arg(value: Val, argType: ArgType):
+    def read(): IO[Val] = argType match
       case ArgType.Immediate => IO.pure(value)
-      case ArgType.Position => Read.at(value)
+      case ArgType.Position => Read.at(asAddr(value))
       case ArgType.Relative => Read.atRelative(value)
 
-    def write(x: Int): IO[Unit] = argType match
-      case ArgType.Relative => Read.relativeBase.map(_ + value) >>= (Change.writeAt(_, x))
-      case _                => Change.writeAt(value, x)
+    def write(x: Val): IO[Unit] = argType match
+      case ArgType.Relative => Read.relativeBase.map(_ + asAddr(value)) >>= (Change.writeAt(_, x))
+      case _                => Change.writeAt(asAddr(value), x)
 
   object Arg:
     def apply(n: Int): IO[List[Arg]] =
       Change.readNext.flatMap { code =>
-        iterate(code)(_ / 10).map(_ % 10).drop(2).map(ArgType.fromOrdinal)
+        iterate(code)(_ / 10).map(_.toInt % 10).drop(2).map(ArgType.fromOrdinal)
           .take(n).toList.traverse { argType =>
             Change.readNext map (Arg(_, argType))
           }
@@ -109,7 +113,7 @@ object IntCode:
   case class Machine(code: Program, pointer: Addr = 0, relativeBase: Addr = 0):
     def changeCode(f: Program => Program): Machine = copy(f(code))
     def changePointer(f: Addr => Addr): Machine = copy(pointer = f(pointer))
-    def write(addrValue: (Addr, Int)*): Machine = copy(addrValue.foldLeft(code)(_.updated.tupled(_)))
+    def write(addrValue: (Addr, Val)*): Machine = copy(addrValue.foldLeft(code)(_.updated.tupled(_)))
     def describeMemory: String =
       def memoryChunk(offset: Int): String =
         val chunk = Iterator.from(offset).takeWhile(code.contains).map(code(_)).toVector
@@ -123,12 +127,13 @@ object IntCode:
     override def toString: String = s"[$pointer] $describeMemory"
 
     def run: Machine = Machine.run(this)._2
-    def runIO(input: Int*): Vector[Int] = Machine.runIO(input.toList)(this)._1
-    def withInput(p: Int): Machine = Machine.runUntil { case State.Input(addr) => Change.writeAt(addr, p) }(this)._2
-    def runToOutput: (Int, Machine) = Machine.runUntil { case State.Output(x) => pure(x) }(this)
+    def runIO(input: Val*): Vector[Val] = Machine.runIO(input.toList)(this)._1
+    def withInput(p: Val): Machine = Machine.runUntil { case State.Input(addr) => Change.writeAt(addr, p) }(this)._2
+    def runToOutput: (Val, Machine) = Machine.runUntil { case State.Output(x) => pure(x) }(this)
+    def collectOutput: Vector[Val] = Machine.runIO(Nil)(this)._1
 
   def machine(program: String): Machine =
-    Machine(SortedMap(program.split(",").toVector.map(_.toInt).zipWithIndex.map((a, b) => (b, a)): _*))
+    Machine(SortedMap(program.split(",").toVector.map(_.toLong).zipWithIndex.map((a, b) => (b, a)): _*))
 
   object Machine:
     def runUntil[T](pf: PartialFunction[State, IO[T]]): IO[T] = OpCode.executeCurrent.flatMap {
@@ -137,7 +142,7 @@ object IntCode:
       case unexpected                     => sys.error(s"Unexpected state: $unexpected")
     }
     val run: IO[Unit] = runUntil { case State.Halted => pure(()) }
-    def runIO(input: List[Int], output: Vector[Int] = Vector.empty): IO[Vector[Int]] =
+    def runIO(input: List[Val], output: Vector[Val] = Vector.empty): IO[Vector[Val]] =
       runUntil {
         case State.Input(addr) => input match
           case Nil => sys.error("Empty input")

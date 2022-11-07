@@ -8,7 +8,7 @@ import scala.annotation.tailrec
 
 case object Day7 extends Day:
 
-  def runWithInputOrHalt(input: Int): IO[Option[Int]] =
+  def runWithInputOrHalt(input: Val): IO[Option[Val]] =
     Machine.runUntil {
       case State.Input(addr) => Change.writeAt(addr, input)
       case State.Halted => pure(())
@@ -17,22 +17,22 @@ case object Day7 extends Day:
       case State.Halted    => IO.pure(None)
     }
 
-  def amplify(ms: Seq[Machine], input: Int = 0): Int =
-    @tailrec def once(it: Iterator[Machine], acc: Vector[Machine], input: Int): Option[(Vector[Machine], Int)] =
+  def amplify(ms: Seq[Machine], input: Val = 0): Val =
+    @tailrec def once(it: Iterator[Machine], acc: Vector[Machine], input: Val): Option[(Vector[Machine], Val)] =
       if it.isEmpty then Some(acc -> input)
       else runWithInputOrHalt(input)(it.next()) match
         case (Some(out), updated) => once(it, acc :+ updated, out)
         case (None, _)            => None
     once(ms.iterator, Vector.empty, input).fold(input)(amplify.tupled)
 
-  def amplifiers(proto: Machine, phases: Seq[Int]) = phases map proto.withInput
+  def amplifiers(proto: Machine, phases: Seq[Val]) = phases map proto.withInput
 
-  def maximizePhases(proto: Machine, phases: Seq[Int]): (Seq[Int], Int) =
+  def maximizePhases(proto: Machine, phases: Seq[Val]): (Seq[Val], Val) =
     phases.permutations.map(ps => ps -> amplify(amplifiers(proto, ps))).maxBy(_._2)
 
   override def test(): Unit =
     def amplify(code: String, phases: String) =
-      val (ps, value) = maximizePhases(machine(code), phases.split(",").map(_.toInt).toSeq)
+      val (ps, value) = maximizePhases(machine(code), phases.split(",").map(_.toLong).toSeq)
       ps.mkString(",") shouldBe phases
       value
 
@@ -45,6 +45,6 @@ case object Day7 extends Day:
 
   def readMachine = readInput(_.map(machine).next())
 
-  override def star1(): Any = maximizePhases(readMachine, 0 to 4)._2 shouldBe 43812
+  override def star1(): Any = maximizePhases(readMachine, 0L to 4)._2 shouldBe 43812
 
-  override def star2(): Any = maximizePhases(readMachine, 5 to 9)._2 shouldBe 59597414
+  override def star2(): Any = maximizePhases(readMachine, 5L to 9)._2 shouldBe 59597414
