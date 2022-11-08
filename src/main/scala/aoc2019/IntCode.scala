@@ -58,8 +58,8 @@ object IntCode:
       case OpCode.Hlt => pure(State.Halted)
       case OpCode.Add => binaryOp(_ + _)
       case OpCode.Mul => binaryOp(_ * _)
-      case OpCode.Inp => Arg.none *> Change.readNext.map(asAddr).map(State.Input(_))
-      case OpCode.Out => Arg.single.flatMap(_.read()).map(State.Output(_))
+      case OpCode.Inp => Arg.single.flatMap(_.readAddr()).map(State.Input(_))
+      case OpCode.Out => Arg.singleIn.map(State.Output(_))
       case OpCode.Jnz =>
         for case x :: addr :: Nil <- Arg(2)
           x <- x.read()
@@ -72,8 +72,8 @@ object IntCode:
       yield State.Continue
       case OpCode.Ltn => binaryOp { (a, b) => if a < b then 1 else 0 }
       case OpCode.Eql => binaryOp { (a, b) => if a == b then 1 else 0 }
-      case OpCode.Arb => Arg.single.flatMap(_.read()).flatMap { x =>
-        Change(m => m.copy(relativeBase = m.relativeBase + asAddr(x))).as(State.Continue)
+      case OpCode.Arb => Arg.singleIn.flatMap { x =>
+        Change(m => m.copy(relativeBase = (m.relativeBase + x).toInt)).as(State.Continue)
       }
 
   enum State:
@@ -92,12 +92,14 @@ object IntCode:
   case class Arg(value: Val, argType: ArgType):
     def read(): IO[Val] = argType match
       case ArgType.Immediate => IO.pure(value)
-      case ArgType.Position => Read.at(asAddr(value))
-      case ArgType.Relative => Read.atRelative(value)
+      case ArgType.Position  => Read.at(asAddr(value))
+      case ArgType.Relative  => Read.atRelative(value)
 
-    def write(x: Val): IO[Unit] = argType match
-      case ArgType.Relative => Read.relativeBase.map(_ + asAddr(value)) >>= (Change.writeAt(_, x))
-      case _                => Change.writeAt(asAddr(value), x)
+    def readAddr(): IO[Addr] = argType match
+      case ArgType.Relative => Read.relativeBase.map(_ + value).map(asAddr)
+      case _                => IO.pure(asAddr(value))
+
+    def write(x: Val): IO[Unit] = readAddr() >>= (Change.writeAt(_, x))
 
   object Arg:
     def apply(n: Int): IO[List[Arg]] =
@@ -109,6 +111,7 @@ object IntCode:
       }
     def none: IO[Unit] = apply(0).void
     def single: IO[Arg] = apply(1).map(_.head)
+    def singleIn: IO[Val] = apply(1).flatMap(_.head.read())
 
   case class Machine(code: Program, pointer: Addr = 0, relativeBase: Addr = 0):
     def changeCode(f: Program => Program): Machine = copy(f(code))
@@ -130,15 +133,14 @@ object IntCode:
     def runIO(input: Val*): Vector[Val] = Machine.runIO(input.toList)(this)._1
     def withInput(p: Val): Machine = Machine.runUntil { case State.Input(addr) => Change.writeAt(addr, p) }(this)._2
     def runToOutput: (Val, Machine) = Machine.runUntil { case State.Output(x) => pure(x) }(this)
-    def collectOutput: Vector[Val] = Machine.runIO(Nil)(this)._1
 
   def machine(program: String): Machine =
     Machine(SortedMap(program.split(",").toVector.map(_.toLong).zipWithIndex.map((a, b) => (b, a)): _*))
 
   object Machine:
-    def runUntil[T](pf: PartialFunction[State, IO[T]]): IO[T] = OpCode.executeCurrent.flatMap {
-      case State.Continue                 => runUntil(pf)
-      case other if pf.isDefinedAt(other) => pf(other)
+    def runUntil[T](pf: PartialFunction[State, IO[T]]): IO[T] = OpCode.executeCurrent.repeatUntil {
+      case State.Continue                 => None
+      case other if pf.isDefinedAt(other) => Some(pf(other))
       case unexpected                     => sys.error(s"Unexpected state: $unexpected")
     }
     val run: IO[Unit] = runUntil { case State.Halted => pure(()) }
