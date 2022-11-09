@@ -1,5 +1,7 @@
 package common
 
+import scala.annotation.tailrec
+
 object coord:
 
   trait Vec[C]:
@@ -79,6 +81,23 @@ object coord:
       )
     }
 
+  /** @returns minimal vector S that A + K*S = B */
+  def discreteStepTowards[C](a: C, b: C)(using V: Vec[C])(using N: Integral[V.Item]): C =
+    import N.*
+    val deltas = V.zip(b, a)(_ - _)
+    if deltas.components.forall(_ == N.zero) then deltas
+    else
+      @tailrec def gcd(a: V.Item, b: V.Item): V.Item =
+        if a < b then gcd(b, a)
+        else if b == N.zero then a
+        else gcd(b, a % b)
+      val divisor = deltas.components.map(abs).reduce(gcd)
+      deltas.map(_ / divisor)
+
+  def discreteLine[C](a: C, b: C)(using V: Vec[C])(using N: Integral[V.Item]): Iterator[C] =
+    val step = discreteStepTowards(a, b)
+    Iterator.iterate(a)(_ + step).takeWhile(_ != b) ++ Iterator(b)
+
   given Vec[Int] with
     type Item = Int
 
@@ -100,13 +119,13 @@ object coord:
 
   private def simpleRender: Int2 => String = _ => Color.bright("#")
 
-  def render2d(ps: Set[Int2], render: Int2 => String = simpleRender): Unit =
+  def render2d(ps: Set[Int2], render: Int2 => String = simpleRender, width: Int = 1): Unit =
     val (tl, br) = boundingBox(ps)
     println()
     for y <- tl.y to br.y do
       val line = for x <- tl.x to br.x yield
         val p = Int2(x,y)
-        if ps(p) then render(p) else Color.blue(".")
+        if ps(p) then render(p) else Color.blue(".".padTo(width, ' '))
       println(line.mkString(" "))
     println()
 
