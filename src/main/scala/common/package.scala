@@ -60,4 +60,15 @@ package object common {
       if left.decrementAndGet() == 0 then promise.trySuccess(None)
     }
     Await.result(promise.future, Duration.Inf)
+
+  @tailrec def gcd[T](a: T, b: T)(using T: Integral[T]): T =
+    import T.*
+    if a < b then gcd(b, a)
+    else if b == zero then a
+    else gcd(b, a % b)
+
+  def lcm[T](a: T, b: T)(using T: Integral[T]): T =
+    import T.*
+    if a == zero && b == zero then zero
+    else a / gcd(a, b) * b
 }

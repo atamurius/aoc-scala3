@@ -87,10 +87,6 @@ object coord:
     val deltas = V.zip(b, a)(_ - _)
     if deltas.components.forall(_ == N.zero) then deltas
     else
-      @tailrec def gcd(a: V.Item, b: V.Item): V.Item =
-        if a < b then gcd(b, a)
-        else if b == N.zero then a
-        else gcd(b, a % b)
       val divisor = deltas.components.map(abs).reduce(gcd)
       deltas.map(_ / divisor)
 
