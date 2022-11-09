@@ -52,7 +52,9 @@ object IntCode:
           _ <- c.write(op(a, b))
       yield State.Continue
 
-    def executeCurrent: IO[State] = Read.pointer flatMap Read.at map parse flatMap execute
+    def current: IO[OpCode] = Read.pointer flatMap Read.at map parse
+    
+    def executeCurrent: IO[State] = current flatMap execute
 
     def execute: OpCode => IO[State] =
       case OpCode.Hlt => pure(State.Halted)
@@ -128,11 +130,15 @@ object IntCode:
           s"$prefix${chunk mkString ","}$next"
       memoryChunk(0)
     override def toString: String = s"[$pointer] $describeMemory"
+    def isTerminated: Boolean = OpCode.current.map(_ == OpCode.Hlt)(this)._1
+    
+    def eval[T](op: IO[T]): T = op(this)._1
+    def stateAfter(op: IO[_]): Machine = op(this)._2
 
-    def run: Machine = Machine.run(this)._2
-    def runIO(input: Val*): Vector[Val] = Machine.runIO(input.toList)(this)._1
-    def withInput(p: Val): Machine = Machine.runUntil { case State.Input(addr) => Change.writeAt(addr, p) }(this)._2
-    def runToOutput: (Val, Machine) = Machine.runUntil { case State.Output(x) => pure(x) }(this)
+    def run: Machine = stateAfter(Machine.run)
+    def runIO(input: Val*): Vector[Val] = eval(Machine.runIO(input.toList))
+    def withInput(p: Val): Machine = stateAfter(Machine.runToInput(p))
+    def runToOutput: (Val, Machine) = Machine.runToOutput(this)
 
   def machine(program: String): Machine =
     Machine(SortedMap(program.split(",").toVector.map(_.toLong).zipWithIndex.map((a, b) => (b, a)): _*))
@@ -143,6 +149,7 @@ object IntCode:
       case other if pf.isDefinedAt(other) => Some(pf(other))
       case unexpected                     => sys.error(s"Unexpected state: $unexpected")
     }
+    def runUntilInterruption: IO[State] = runUntil { case any => pure(any) }
     val run: IO[Unit] = runUntil { case State.Halted => pure(()) }
     def runIO(input: List[Val], output: Vector[Val] = Vector.empty): IO[Vector[Val]] =
       runUntil {
@@ -153,3 +160,5 @@ object IntCode:
         case State.Output(x) => runIO(input, output :+ x)
         case State.Halted => pure(output)
       }
+    def runToInput(x: Val): IO[Unit] = runUntil { case State.Input(addr) => Change.writeAt(addr, x) }
+    def runToOutput: IO[Val] = runUntil { case State.Output(x) => pure(x) }
