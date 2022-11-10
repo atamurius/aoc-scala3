@@ -116,13 +116,14 @@ object coord:
   private def simpleRender: Int2 => String = _ => Color.bright("#")
 
   def render2d(ps: Set[Int2], render: Int2 => String = simpleRender, width: Int = 1): Unit =
-    val (tl, br) = boundingBox(ps)
-    println()
-    for y <- tl.y to br.y do
-      val line = for x <- tl.x to br.x yield
-        val p = Int2(x,y)
-        if ps(p) then render(p) else Color.blue(".".padTo(width, ' '))
-      println(line.mkString(" "))
+    if ps.nonEmpty then
+      val (tl, br) = boundingBox(ps)
+      println()
+      for y <- tl.y to br.y do
+        val line = for x <- tl.x to br.x yield
+          val p = Int2(x,y)
+          if ps(p) then render(p) else Color.blue(".".padTo(width, ' '))
+        println(line.mkString(" "))
     println()
 
   given Vec[Int2] with

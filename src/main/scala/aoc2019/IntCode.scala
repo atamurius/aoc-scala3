@@ -53,7 +53,7 @@ object IntCode:
       yield State.Continue
 
     def current: IO[OpCode] = Read.pointer flatMap Read.at map parse
-    
+
     def executeCurrent: IO[State] = current flatMap execute
 
     def execute: OpCode => IO[State] =
@@ -106,7 +106,7 @@ object IntCode:
   object Arg:
     def apply(n: Int): IO[List[Arg]] =
       Change.readNext.flatMap { code =>
-        iterate(code)(_ / 10).map(_.toInt % 10).drop(2).map(ArgType.fromOrdinal)
+        Iterator.iterate(code)(_ / 10).map(_.toInt % 10).drop(2).map(ArgType.fromOrdinal)
           .take(n).toList.traverse { argType =>
             Change.readNext map (Arg(_, argType))
           }
@@ -131,7 +131,7 @@ object IntCode:
       memoryChunk(0)
     override def toString: String = s"[$pointer] $describeMemory"
     def isTerminated: Boolean = OpCode.current.map(_ == OpCode.Hlt)(this)._1
-    
+
     def eval[T](op: IO[T]): T = op(this)._1
     def stateAfter(op: IO[_]): Machine = op(this)._2
 

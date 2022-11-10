@@ -38,6 +38,13 @@ trait StatefulIO[S]:
   def pure[T](t: T): IO[T] = PureValue(t)
   def state: IO[S] = Stateful(s => (s, s))
   def replace(s: S): IO[Unit] = Stateful(_ => ((), s))
+  
+  def iterate[V, T](value: V)(f: V => IO[Either[V, T]]): IO[T] =
+    @tailrec def recur(value: V, state: S): (T, S) =
+      f(value)(state) match
+        case (Right(result), s) => (result, s)
+        case (Left(value), s) => recur(value, s)
+    Stateful(recur(value, _))
 
   extension[A](seq: List[A]) def traverse[B](f: A => IO[B]): IO[List[B]] =
     seq.foldLeft(pure(List.newBuilder[B])) { (acc, a) =>
