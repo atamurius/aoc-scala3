@@ -70,5 +70,7 @@ package object common {
   def lcm[T](a: T, b: T)(using T: Integral[T]): T =
     import T.*
     if a == zero && b == zero then zero
+    else if a == one then b
+    else if b == one then a
     else a / gcd(a, b) * b
 }
