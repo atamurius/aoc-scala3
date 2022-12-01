@@ -1,3 +1,4 @@
+import java.util.NoSuchElementException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import scala.annotation.tailrec
@@ -20,7 +21,22 @@ package object common {
         acc + (p -> (acc(p) + 1))
       }
 
-  extension[T](it: Iterator[T]) def at(i: Int): T = it.drop(i).next()
+  extension[T](it: Iterator[T]) 
+    def at(i: Int): T = it.drop(i).next()
+    def takeUntil(last: T => Boolean): Iterator[T] = new Iterator[T] {
+      private var terminated = false
+
+      override def hasNext: Boolean = it.hasNext && !terminated
+
+      override def next(): T =
+        if terminated then throw NoSuchElementException()
+        val t = it.next()
+        terminated = last(t)
+        t
+    }
+
+  def unfoldIterator[T](init: T)(next: T => Option[T]): Iterator[T] =
+    Iterator(init) ++ Iterator.unfold(init)(next(_).map(x => (x,x)))
 
   extension[K, V](map: Map[K, V])(using V: Numeric[V])
     def plusAt(key: K, delta: V): Map[K, V] = map + (key -> V.plus(map.getOrElse(key, V.zero), delta))
