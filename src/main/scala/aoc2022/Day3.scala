@@ -1,19 +1,26 @@
 package aoc2022
 
-import common.*
+import java.lang.Character.{isLowerCase, isUpperCase}
 
 case object Day3 extends Day:
-  def charInBoth(rucksack: String): Set[Char] =
-    val (left, right) = rucksack.splitAt(rucksack.length / 2)
-    left.toSet intersect right.toSet
-
   def priority(item: Char): Int =
-    if Character.isLowerCase(item) then item - 'a' + 1
-    else if Character.isUpperCase(item) then item - 'A' + 27
-    else sys.error(s"Unexpected item $item")
+    if isLowerCase(item) then item - 'a' + 1
+    else item - 'A' + 27
+
+  override def star1Task = _
+    .flatMap { line =>
+      val (left, right) = line.splitAt(line.length / 2)
+      left.toSet & right.toSet map priority
+    }
+    .sum
+  override def star2Task = _
+    .grouped(3)
+    .flatMap(_.map(_.toSet).reduce[Set[Char]](_ & _))
+    .map(priority)
+    .sum
 
   override def test(): Unit =
-    val t =
+    def t =
       """
         |vJrwpWtwJgWrhcsFMMfFFhFp
         |jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
@@ -22,12 +29,6 @@ case object Day3 extends Day:
         |ttgJtRGJQctTZtZT
         |CrZsJsPPZsGzwwsLwLmpwMDw
         |""".stripMargin.trim.linesIterator
-    t.flatMap(charInBoth).map(priority).sum shouldBe 157
-
-  override def star1(): Any = readInput(_.flatMap(charInBoth).map(priority).sum) shouldBe 8176
-
-  override def star2(): Any = readInput {
-    _.map(_.toSet).grouped(3)
-      .flatMap(_.reduce[Set[Char]](_ intersect _))
-      .map(priority).sum
-  } shouldBe 2689
+    star1Task(t) shouldBe 157
+    readInput(star1Task) shouldBe 8176
+    readInput(star2Task) shouldBe 2689

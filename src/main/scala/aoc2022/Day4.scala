@@ -1,7 +1,5 @@
 package aoc2022
 
-import common.*
-
 case object Day4 extends Day:
   case class Segment(left: Int, right: Int):
     def contains(x: Int) = x >= left && x <= right
@@ -11,12 +9,11 @@ case object Day4 extends Day:
   def parse(s: String) = s.split(",").map(_.split("-")) match
     case Array(Array(a, b), Array(c, d)) => (Segment(a.toInt, b.toInt), Segment(c.toInt, d.toInt))
 
-  def oneContainsTheOther(a: Segment, b: Segment) = (a contains b) || (b contains a)
-
-  def overlaps(a: Segment, b: Segment) = (a overlaps b) || (b overlaps a)
+  override def star1Task = _.map(parse).count((a, b) => (a contains b) || (b contains a))
+  override def star2Task = _.map(parse).count((a, b) => (a overlaps b) || (b overlaps a))
 
   override def test(): Unit =
-    val t =
+    def t =
       """
         |2-4,6-8
         |2-3,4-5
@@ -24,10 +21,10 @@ case object Day4 extends Day:
         |2-8,3-7
         |6-6,4-6
         |2-6,4-8
-        |""".stripMargin.trim.linesIterator.toVector
-    t.map(parse).count(oneContainsTheOther) shouldBe 2
-    t.map(parse).count(overlaps) shouldBe 4
+        |""".stripMargin.trim.linesIterator
+    star1Task(t) shouldBe 2
+    star2Task(t) shouldBe 4
+    readInput(star1Task) shouldBe 515
+    readInput(star2Task) shouldBe 883
 
-  override def star1(): Any = readInput(_.map(parse).count(oneContainsTheOther)) shouldBe 515
-  override def star2(): Any = readInput(_.map(parse).count(overlaps)) shouldBe 883
 
