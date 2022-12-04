@@ -5,7 +5,7 @@ import coord._
 
 object read:
   extension (it: Iterator[String])
-    def lineSeparated[T](f: Iterator[String] => T): Vector[T] =
+    def lineSeparatedBlocks[T](f: Iterator[String] => T): Vector[T] =
       Iterator.unfold(it) { it =>
         if it.hasNext then
           val next = f(it.takeWhile(_.trim.nonEmpty))
@@ -13,6 +13,8 @@ object read:
         else
           None
       }.toVector
+
+  def asNumberOf[T: Numeric](v: String): T = Numeric[T].parseString(v).getOrElse(sys.error(s"Invalid number $v"))
 
   case class Board[T](lines: Vector[Vector[T]]):
     def height = lines.size

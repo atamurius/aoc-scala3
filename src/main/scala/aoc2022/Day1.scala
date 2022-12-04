@@ -1,11 +1,12 @@
 package aoc2022
 
-import common.*
 import common.read.*
 
 case object Day1 extends Day:
-  def parseCalories(ls: IterableOnce[String]): Seq[Seq[Int]] =
-    ls.iterator.lineSeparated(_.map(_.toInt).toSeq).toSeq
+  def caloriesPerElf(lines: Input) = lines.lineSeparatedBlocks(_.map(_.toInt).sum)
+
+  override def star1Task = caloriesPerElf(_).max
+  override def star2Task = caloriesPerElf(_).sorted.takeRight(3).sum
 
   override def test(): Unit =
     val t =
@@ -25,10 +26,7 @@ case object Day1 extends Day:
         |
         |10000
         |""".stripMargin.trim.linesIterator
-    parseCalories(t).map(_.sum).max shouldBe 24000
+    star1Task(t) shouldBe 24000
+    readInput(star1Task) shouldBe 66186
+    readInput(star2Task) shouldBe 196804
 
-  override def star1(): Any = readInput(parseCalories).map(_.sum).max shouldBe 66186
-
-  override def star2(): Any =
-    val Seq(a, b, c, _*) = readInput(parseCalories).map(_.sum).sorted.reverse
-    a + b + c shouldBe 196804

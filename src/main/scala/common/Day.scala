@@ -14,7 +14,7 @@ trait Day extends Product:
   /** Reads `$package/$day.input` */
   protected final def readInput[T](read: Iterator[String] => T): T =
     val pkg    = getClass.getPackageName
-    val source = Source.fromResource(s"$pkg/${productPrefix}.input")
+    val source = Source.fromResource(s"$pkg/${productPrefix}.input", getClass.getClassLoader)
     try read(source.getLines())
     finally source.close()
 

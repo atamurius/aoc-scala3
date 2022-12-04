@@ -48,7 +48,7 @@ case object Day19 extends Day:
 
   def parseInt3(s: String) = V[Int3].build(s.split(",").iterator.map(_.toInt))
 
-  def parseInput(ls: Iterator[String]) = ls.lineSeparated { ls =>
+  def parseInput(ls: Iterator[String]) = ls.lineSeparatedBlocks { ls =>
     val title = ls.next().replace("---", "").trim
     val ps = ls.map(parseInt3).toSet
     title -> ps

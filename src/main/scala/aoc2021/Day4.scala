@@ -14,7 +14,7 @@ case object Day4 extends Day:
 
   def parse(lines: Iterator[String]) =
     val numbers = lines.next().split(",").toVector.map(_.toInt)
-    val boards = lines.lineSeparated(Board.read(_).map(_.toInt)).map(new Bingo(_))
+    val boards = lines.lineSeparatedBlocks(Board.read(_).map(_.toInt)).map(new Bingo(_))
     (boards, numbers)
 
   def runUntilWin(boards: Seq[Bingo], numbers: Seq[Int]): Option[(Int, Bingo)] =
