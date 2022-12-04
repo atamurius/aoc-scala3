@@ -1,49 +1,57 @@
 package aoc2022
 
-import common.*
-
 case object Day2 extends Day:
-  enum Outcome:
-    case Lose, Draw, Win
-
-  enum Move:
+  enum Shape:
     case Rock, Paper, Scissors
 
-    def contest(right: Move) = (this, right) match
-      case (`right`, `right`)  => Outcome.Draw
-      case (Rock, Scissors)  => Outcome.Win
-      case (Paper, Rock)     => Outcome.Win
-      case (Scissors, Paper) => Outcome.Win
-      case _                 => Outcome.Lose
+  import Shape.{values as shapes, *}
 
-  def fromCode(code: String) = code match
-    case "A"|"X" => Move.Rock
-    case "B"|"Y" => Move.Paper
-    case "C"|"Z" => Move.Scissors
+  val defeats = Set(Rock -> Scissors, Paper -> Rock, Scissors -> Paper)
 
-  def score(opponent: Move, your: Move) = your.ordinal + 1 + (your contest opponent).ordinal * 3
+  def score(opponent: Shape, you: Shape) =
+    val outcome = if opponent == you then 3
+    else if defeats(opponent, you) then 0
+    else 6
+    outcome + you.ordinal + 1
 
-  def parseLine(l: String) = l.split(" ").map(fromCode) match
-    case Array(opp, your) => (opp, your)
+  def columns: String => (String, String) = _.split(" ") match { case Array(a, b) => (a, b) }
 
-  def parseLine2(l: String) = l.split(" ") match
-    case Array(opp, "X") => (fromCode(opp), Outcome.Lose)
-    case Array(opp, "Y") => (fromCode(opp), Outcome.Draw)
-    case Array(opp, "Z") => (fromCode(opp), Outcome.Win)
-
-  def chooseMove(opponent: Move, outcome: Outcome) =
-    (opponent, Move.values.find(_.contest(opponent) == outcome).get)
+  override def star1Task = _
+    .map(columns).map { (a, b) =>
+      val opponent = a match
+        case "A" => Rock
+        case "B" => Paper
+        case "C" => Scissors
+      val you = b match
+        case "X" => Rock
+        case "Y" => Paper
+        case "Z" => Scissors
+      score(opponent, you)
+    }
+    .sum
+  override def star2Task = _
+    .map(columns).map { (a, b) =>
+      val opponent = a match
+        case "A" => Rock
+        case "B" => Paper
+        case "C" => Scissors
+      val you = b match
+        case "X" => shapes.find(defeats(opponent, _)).get
+        case "Y" => opponent
+        case "Z" => shapes.find(defeats(_, opponent)).get
+      score(opponent, you)
+    }
+    .sum
 
   override def test(): Unit =
-    val t =
+    def t =
       """
         |A Y
         |B X
         |C Z
-        |""".stripMargin.trim.linesIterator.toVector
-    t.map(parseLine).map(score).sum shouldBe 15
-    t.map(parseLine2).map(chooseMove).map(score).sum shouldBe 12
+        |""".stripMargin.trim.linesIterator
+    star1Task(t) shouldBe 15
+    readInput(star1Task) shouldBe 12458
+    star2Task(t) shouldBe 12
+    readInput(star2Task) shouldBe 12683
 
-  override def star1(): Any = readInput(_.map(parseLine).map(score).sum) shouldBe 12458
-
-  override def star2(): Any = readInput(_.map(parseLine2).map(chooseMove).map(score).sum) shouldBe 12683
