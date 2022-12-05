@@ -8,3 +8,5 @@ trait Day extends common.Day:
 
   override def star1(): Any = readInput(star1Task)
   override def star2(): Any = readInput(star2Task)
+
+  final def answerOf(t: Input => Any): Any = readInput(t)
