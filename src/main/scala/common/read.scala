@@ -16,6 +16,37 @@ object read:
 
   def asNumberOf[T: Numeric](v: String): T = Numeric[T].parseString(v).getOrElse(sys.error(s"Invalid number $v"))
 
+  extension [T](it: Iterator[T])
+    def withUndo: UndoIterator[T] = it match
+      case it: UndoIterator[T] @unchecked => it
+      case it => UndoIterator(it)
+
+  class UndoIterator[T](underlying: Iterator[T]) extends Iterator[T] {
+    private var lastItem = Option.empty[T]
+    private var nextItem = Option.empty[T]
+
+    override def hasNext: Boolean = nextItem.isDefined || underlying.hasNext
+
+    override def next(): T =
+      val item =
+        if nextItem.isDefined then nextItem.get
+        else underlying.next()
+      nextItem = None
+      lastItem = Some(item)
+      item
+
+    def lastReturned: Option[T] = lastItem
+
+    def undoLast(): Unit =
+      if nextItem.isEmpty then nextItem = lastItem
+      lastItem = None
+
+    def consumeWhile[R](condition: T => Boolean)(consume: Iterator[T] => R): R =
+      val result = consume(takeWhile(condition))
+      if lastItem.exists(!condition(_)) then undoLast()
+      result
+  }
+
   case class Board[T](lines: Vector[Vector[T]]):
     def height = lines.size
     def width = lines.head.size

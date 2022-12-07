@@ -1,36 +1,56 @@
 package aoc2022
 
 import common.*
+import common.read.*
+
+import scala.annotation.tailrec
 
 case object Day7 extends aoc2022.Day:
-  type Dir = Seq[String]
-  val Root = Nil
+  case class Dir(path: Seq[String]):
+    def / (segment: String): Dir = Dir(path :+ segment)
+    def withAllParents: Iterator[Dir] = path.inits.map(Dir.apply)
+    def parent: Dir = Dir(path.init)
+    override def toString: String = s"/${path mkString "/"}"
+  object Dir:
+    val Root: Dir = Dir(Nil)
+
+  private object Inputs:
+    val CD    = """^\$ cd (.*)$""".r
+    val LS    = "$ ls"
+    val DIR   = """^dir (.*)$""".r
+    val FILE  = """^(\d+) (.*)$""".r
+
+  def parseCommands(input: UndoIterator[String]): Map[Dir, Long] =
+    @tailrec def recur(current: Dir, fileSizes: Map[Dir, Long]): Map[Dir, Long] =
+      input.nextOption() match
+        case None                   => fileSizes
+        case Some(Inputs.CD("/"))   => recur(Dir.Root, fileSizes)
+        case Some(Inputs.CD(".."))  => recur(current.parent, fileSizes)
+        case Some(Inputs.CD(other)) => recur(current / other, fileSizes)
+        case Some(Inputs.LS) =>
+          val size = input.consumeWhile(!_.startsWith("$")) { ls =>
+            ls.map {
+              case Inputs.DIR(_)        => 0
+              case Inputs.FILE(size, _) => size.toLong
+            }.sum
+          }
+          recur(current, fileSizes.plusAt(current, size))
+        case other => sys.error(s"Unexpected input: $other")
+    recur(Dir.Root, Map.empty)
 
   def readRecursiveSize(lines: Iterator[String]): Map[Dir, Long] =
-    var dirs = Map.empty[Seq[String], Map[String, Long]]
-    var current: Seq[String] = Root
-    val CD = """^\$ cd (.*)$""".r
-    val DIR = """^dir (.*)$""".r
-    val FILE = """^(\d+) (.*)$""".r
-    lines.foreach {
-      case CD("/")        => current = Root
-      case CD("..")       => current = current.init
-      case CD(dir)        => current :+= dir
-      case "$ ls"         =>
-      case DIR(dir)       => dirs += (current :+ dir) -> Map.empty
-      case FILE(size, f)  =>
-        dirs = dirs.putMerge(current, Map(f -> size.toLong))(_ ++ _)
+    val filesPerDir = parseCommands(lines.withUndo)
+    filesPerDir.foldLeft(Map.empty[Dir, Long]) {
+      case (sizes, (dir, size)) =>
+        dir.withAllParents.foldLeft(sizes)(_.plusAt(_, size))
     }
-    var recursiveSize = Map.empty[Seq[String], Long]
-    for (d, fs) <- dirs; dir <- d.inits do
-      recursiveSize = recursiveSize.putMerge(dir, fs.values.sum)(_ + _)
-    recursiveSize
 
-  override def star1Task = readRecursiveSize(_).values.filter(_ < 100_000).sum
+  override def star1Task: Task = 
+    readRecursiveSize(_).values.filter(_ < 100_000).sum
 
-  override def star2Task = lines =>
+  override def star2Task: Task = lines =>
     val dirs = readRecursiveSize(lines)
-    val spaceFree = 70_000_000 - dirs(Root)
+    val spaceFree = 70_000_000 - dirs(Dir.Root)
     val spaceNeeded = 30_000_000
     dirs.values.toVector.sorted.find(_ + spaceFree >= spaceNeeded).get
 
