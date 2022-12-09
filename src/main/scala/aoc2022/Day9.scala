@@ -1,5 +1,6 @@
 package aoc2022
 
+import common.*
 import common.coord.*
 
 import scala.annotation.tailrec
@@ -7,7 +8,7 @@ import scala.concurrent.duration.FiniteDuration
 import scala.math.abs
 import scala.concurrent.duration._
 
-case object Day9 extends Day:
+case object Day9 extends aoc2022.Day:
   val dirs = Map("R" -> Dir.E, "U" -> Dir.S, "D" -> Dir.N, "L" -> Dir.W)
 
   def moveTail(tail: Int2, head: Int2) =
@@ -24,13 +25,18 @@ case object Day9 extends Day:
       Rope(recur(List(knots.head + dir.delta), knots.tail))
     def render(): Unit =
       render2d(knots.toSet + Int2(0,0), {
-        case Int2(0, 0) => "s"
-        case pos => knots.indexOf(pos) match
-          case 0 => "H"
-          case i => s"$i"
+        case Int2(0, 0) => Color.yellow("s")
+        case pos => Color.bright(
+          knots.indexOf(pos) match
+            case -1 => "."
+            case 0 => Color.red("H")
+            case n if n == knots.size - 1 => Color.green(n)
+            case i => s"$i"
+        )
       })
 
   def simulate(knots: Int, lines: Iterator[String], debug: Boolean = false) =
+    val animation = new Terminal.Animation()
     val tails = lines
       .map(_.split(" "))
       .flatMap { case Array(d, s) => Iterator.fill(s.toInt)(dirs(d)) }
@@ -38,9 +44,8 @@ case object Day9 extends Day:
       .foldLeft(Set.empty[Int2]) {
         case (acc, rope) =>
           if debug then
-            println("\u001b[H")
+            animation.requestFrame()
             rope.render()
-            Thread.sleep(100)
           acc + rope.knots.last
       }
     if debug then render2d(tails)
