@@ -7,28 +7,32 @@ import scala.collection.Iterator.iterate
 import common.coord.*
 
 case object Day8 extends aoc2022.Day:
-  extension (board: Board[Int])
-    def line(from: Int2, dir: Dir) = iterate(from)(_ + dir.delta).takeWhile(board.contains).map(board(_))
-
   def readMap(ls: Iterator[String]) = Board.read(ls, "".r).transform((_, x) => x.toInt)
+
+  extension (board: Board[Int])
+    def lineFrom(from: Int2, dir: Dir) =
+      iterate(from)(_ + dir.delta)
+        .drop(1)
+        .takeWhile(board.contains)
+        .map(board(_))
 
   override def star1Task: Task = lines =>
     val board = readMap(lines)
-    val visibility = board.transform { (pos, h) =>
+    val visibleSides = board.transform { (pos, h) =>
       Dir.values
-        .map(d => board.line(pos, d).drop(1).forall(_ < h))
+        .map(d => board.lineFrom(pos, d).forall(_ < h))
         .count(identity)
     }
-    visibility.points.count((_, v) => v > 0)
+    visibleSides.values.count(_ > 0)
 
   override def star2Task: Task = lines =>
     val board = readMap(lines)
     val scores = board.transform { (pos, h) =>
       Dir.values
-        .map(d => board.line(pos, d).drop(1).takeUntil(_ >= h).size)
+        .map(d => board.lineFrom(pos, d).takeUntil(_ >= h).size)
         .product
     }
-    scores.points.map(_._2).max
+    scores.values.max
 
   override def test(): Unit =
     def t =

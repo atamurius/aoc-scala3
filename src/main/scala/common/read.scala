@@ -84,6 +84,8 @@ object read:
       for (row, y) <- lines.iterator.zipWithIndex
           (t, x) <- row.iterator.zipWithIndex
       yield Int2(x,y) -> t
+    
+    def values: Iterator[T] = points.map(_._2)
 
     override def toString: String = lines.map(_.mkString(" ")).mkString("", "\n", "\n")
 
