@@ -45,6 +45,8 @@ package object common {
     def putMerge(key: K, value: V)(merge: (V, V) => V): Map[K, V] =
       map.updated(key, map.get(key).fold(value)(merge(_, value)))
 
+    def mapAt(key: K)(f: V => V): Map[K, V] = map.updated(key, f(map(key))) 
+    
     def merge(that: Map[K, V])(m: (V, V) => V): Map[K, V] =
       map.foldLeft(that) {
         case (acc, (key, value)) => acc.putMerge(key, value)(m)
