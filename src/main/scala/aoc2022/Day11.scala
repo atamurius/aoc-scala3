@@ -2,6 +2,7 @@ package aoc2022
 
 import common.*
 import common.read.*
+import common.parse.*
 
 import scala.concurrent.duration._
 
@@ -21,42 +22,28 @@ case object Day11 extends aoc2022.Day:
     def addItem(item: Item) = copy(items = items :+ item)
     def inspected() = copy(items = Vector.empty, inspectedCount = inspectedCount + items.size)
 
-  def readMonkeys(lines: Iterator[String]): Map[MonkeyId, Monkey] =
-    val MonkeyHeader = "Monkey (.*):".r
-    val ItemsLine    = "  Starting items: (.*)".r
-    val OpLine       = "  Operation: new = old (.) (.*)".r
-    val TestLine     = "  Test: divisible by (.*)".r
-    val CondLine     = "    If (true|false): throw to monkey (.*)".r
-    lines.lineSeparatedBlocks { block =>
-      val MonkeyHeader(monkey) = block.next()
-      val ItemsLine(items) = block.next()
-      val OpLine(op, value) = block.next()
-      val opValue = value match {
-        case "old" => identity[Item]
-        case x     => Function.const(Item(x))
-      }
-      val TestLine(test) = block.next()
-      val CondLine(cond1, monkey1) = block.next()
-      val CondLine(cond2, monkey2) = block.next()
-      block.foreach { _ => }
-      val monkeyData = Monkey(
-        items = items.split(",").toVector.map(_.trim).map(Item),
-        operation = op match {
-          case "+" => {x => x + opValue(x)}
-          case "*" => {x => x * opValue(x)}
-        },
-        divisor = test.toInt,
-        successMonkey = if cond1 == "true" then monkey1 else monkey2,
-        failureMonkey = if cond1 == "false" then monkey1 else monkey2,
+  val monkeysFormat: lines.Format[Map[MonkeyId, Monkey]] = {
+    val id = line("Monkey " *> line.takeTerminatedWith(':').map(_.mkString))
+    val monkey = for
+      items     <- line("  Starting items: " *> numberAs[Item].delimitedBy(", "))
+      operation <- line(
+        "  Operation: new = old " *> ("[+*]".r <* " ") <*> ("old" or numberAs[Item]) mapWithError {
+          case ("+", arg) => Right((old: Item) => old + arg.getOrElse(old))
+          case ("*", arg) => Right((old: Item) => old * arg.getOrElse(old))
+          case (other, _) => Left(s"Unknown operation $other")
+        }
       )
-      monkey -> monkeyData
-    }.toMap
+      test      <- line("  Test: divisible by " *> numberAs[Int])
+      ifTrue    <- line("    If true: throw to monkey " *> line.rest.asString)
+      ifFalse   <- line("    If false: throw to monkey " *> line.rest.asString)
+    yield Monkey(items, operation, test, ifTrue, ifFalse)
 
-  override val timeout = 1.minute
+    (id <*> monkey).delimitedBy(lines.blank).map(_.toMap)
+  }
 
-  override def star1Task: Task = lines => playWith(readMonkeys(lines), 20, _ / 3)
+  override def star1Task: Task = lines => playWith(monkeysFormat(lines.toSeq), 20, _ / 3)
   override def star2Task: Task = lines =>
-    val monkeys = readMonkeys(lines)
+    val monkeys = monkeysFormat(lines.toSeq)
     val p = monkeys.values.map(_.divisor).product
     playWith(monkeys, 10_000, _ % p)
 
