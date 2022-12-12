@@ -4,7 +4,7 @@ import common.coord.*
 import common.read.Board
 import common.{Color, Edge, Graph, Terminal}
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import scala.math.abs
 
 case object Day12 extends Day:
@@ -13,9 +13,10 @@ case object Day12 extends Day:
   given Graph[Grid] with
     type Node = Int2
     extension (graph: Grid)
-      def canMove(from: Node, to: Node) = graph(to) - graph(from) <= 1
+      def canMove(from: Node, to: Node) =
+        graph.contains(to) && graph.contains(from) && graph(to) - graph(from) <= 1
       def edgesFrom(a: Node): IterableOnce[Edge[Node]] =
-        a.neighbours.filter(graph.contains).filter(canMove(a, _)).map(Edge(a, _))
+        a.neighbours.filter(canMove(a, _)).map(Edge(a, _))
 
   def parseGrid(lines: Iterator[String]) =
     val hights = Board.read(lines, "".r)
@@ -36,8 +37,6 @@ case object Day12 extends Day:
     val (grid, _, end) = parseGrid(lines)
     val start = grid.points.collect { case (p, 'a') => p }.toSet
     grid.findPathMinStepsFromAny(start, Set(end)).size
-
-  override val timeout: FiniteDuration = 1.minute
 
   override def test(): Unit =
     def t =

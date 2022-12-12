@@ -13,14 +13,20 @@ trait Graph[G]:
 
     def findPathMinSteps(start: Node, end: Node): Vector[Edge[Node]] = findPathMinStepsFromAny(Set(start), Set(end))
 
-    def findPathMinStepsFromAny(start: Set[Node], end: Set[Node]): Vector[Edge[Node]] =
+    def findPathMinStepsFromAny(
+        start: Set[Node], 
+        end: Set[Node],
+        onFrontUpdated: (Set[Node], Set[Node]) => Unit = { (_, _) => },
+    ): Vector[Edge[Node]] =
       @tailrec def recur(front: Set[Node], edgeTo: Map[Node, Edge[Node]]): Vector[Edge[Node]] =
+        onFrontUpdated(Set.empty, front)
         end.iterator.flatMap(edgeTo.get).nextOption() match
           case Some(edge) =>
             unfoldIterator(edge)(edgeTo get _.start).takeWhile(e => !start(e.end)).toVector
           case None =>
             val next = front.flatMap(graph.edgesFrom).filterNot(edgeTo contains _.end)
             val nextFront = next.groupMapReduce(_.end)(identity)((e, _) => e)
+            onFrontUpdated(front, nextFront.keySet)
             if nextFront.isEmpty then Vector.empty
             else recur(nextFront.keySet, edgeTo ++ nextFront)
       recur(start, Map.empty)

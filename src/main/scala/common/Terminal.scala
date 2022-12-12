@@ -12,6 +12,15 @@ object Terminal:
 
   def home(): Unit = print(s"$ESC[H")
 
+  def moveTo(x: Int, y: Int): Unit = print(s"$ESC[${y + 1};${x + 1}H")
+
+  def printAt(x: Int, y: Int, value: Any): Unit = {
+    moveTo(x, y)
+    print(value)
+  }
+
+  def cursorVisibility(visible: Boolean): Unit = print(s"$ESC[?25${if visible then "h" else "l"}")
+
   def clear(): Unit = print(s"$ESC[2J$ESC[H")
 
   class Animation(fps: Int = 10):
