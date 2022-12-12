@@ -75,6 +75,13 @@ object read:
       }.toVector
     )
 
+    def render[R](f: (Int2, T) => String): Unit =
+      for (line, y) <- lines.iterator.zipWithIndex do
+        for (value, x) <- line.iterator.zipWithIndex do
+          print(f(Int2(x,y), value))
+        println()
+      println()
+
     def highlight(ps: Int2 => Boolean) = transform {
       case (p, v) if ps(p) => Color.bright(v)
       case (_, v) => v.toString
@@ -84,6 +91,8 @@ object read:
       for (row, y) <- lines.iterator.zipWithIndex
           (t, x) <- row.iterator.zipWithIndex
       yield Int2(x,y) -> t
+    
+    def find(t: T): Option[Int2] = points.collectFirst { case (p, `t`) => p }
     
     def values: Iterator[T] = points.map(_._2)
 

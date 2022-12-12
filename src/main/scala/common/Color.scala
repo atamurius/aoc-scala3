@@ -5,12 +5,17 @@ case class Color(val codes: String*):
   def end = "\u001b[0m"
   def apply(value: Any): String = s"$start$value$end"
   def &(color: Color) = Color(codes ++ color.codes: _*)
+  def and(f: => Color.type => Color): Color = &(f(Color))
 
 object Color:
   val black = Color("30")
+  val white = Color("37")
   val red = Color("31")
   val green = Color("32")
   val yellow = Color("33")
   val blue = Color("34")
   val bright = Color("1")
   val gray = bright & black
+  
+  val bgBlue = Color("44")
+  val negative = Color("7")
