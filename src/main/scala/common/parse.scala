@@ -63,9 +63,9 @@ object parse:
       def or[U](f: Format[U]): Format[Either[T, U]] = Format { in =>
         parse(in) match
           case Right((t, rest)) => Right(Left(t) -> rest)
-          case _ => f.parse(in) match
+          case Left(el) => f.parse(in) match
             case Right((u, rest)) => Right(Right(u) -> rest)
-            case Left(e) => Left(e)
+            case Left(er) => Left(s"$el <nor> $er")
       }
 
       def orElse[U >: T](f: Format[U]): Format[U] = Format { in =>
@@ -80,6 +80,8 @@ object parse:
           case Some(_) => delimitedBy(d).map(t :: _)
         }
       }
+
+      def optDelimitedBy(d: Format[_]): Format[List[T]] = delimitedBy(d).optional.map(_ getOrElse Nil)
 
       def oneOrMore: Format[List[T]] = repeated.expect(_.nonEmpty, "expected at least one item")
 
@@ -121,3 +123,8 @@ object parse:
     def takeUntil(end: I): Format[Data] = takeWhile(_ != end)
 
     def takeTerminatedWith(end: I): Format[Data] = takeUntil(end) <* literal(Seq(end))
+
+    def defer[T](format: => Format[T]): Format[T] = {
+      lazy val evaluated = format
+      Format(in => evaluated.parse(in))
+    }
