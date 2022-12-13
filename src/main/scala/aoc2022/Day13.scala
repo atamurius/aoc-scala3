@@ -7,39 +7,37 @@ import scala.annotation.tailrec
 case object Day13 extends Day:
 
   sealed trait EValue
-  case class Number(value: Int) extends EValue:
-    override def toString: String = value.toString
-  case class EList(values: List[EValue]) extends EValue:
-    override def toString: String = values.mkString("[", ",", "]")
-  def eList(vs: EValue*) = EList(vs.toList)
+  case class Number(value: Int)          extends EValue
+  case class EList(values: List[EValue]) extends EValue
 
   given ordering: Ordering[EValue] with
     private val listOrdering = Ordering.Implicits.seqOrdering[List, EValue]
     override def compare(x: EValue, y: EValue): Int = (x, y) match
       case (Number(x), Number(y)) => Ordering[Int].compare(x, y)
-      case (EList(x), EList(y)) => listOrdering.compare(x, y)
-      case (EList(x), y) => listOrdering.compare(x, List(y))
-      case (x, EList(y)) => listOrdering.compare(List(x), y)
-
-  import ordering.mkOrderingOps
+      case (EList(x),  EList(y))  => listOrdering.compare(x, y)
+      case (EList(x),  y)         => listOrdering.compare(x, List(y))
+      case (x,         EList(y))  => listOrdering.compare(List(x), y)
 
   object inputFormat {
-    lazy val item: line.Format[EValue] = line.defer(list orElse numberAs[Int].map(Number(_)))
-    lazy val list: line.Format[EList]  = line.defer("[" *> item.optDelimitedBy(",").map(EList(_)) <* "]")
+    lazy val item: line.Format[EValue] = defer(list orElse numberAs[Int].map(Number(_)))
+    lazy val list: line.Format[EList]  = defer("[" *> item.optDelimitedBy(",").map(EList(_)) <* "]")
 
     val pairs = (line(list) <*> line(list)).delimitedBy(lines.blank)
     val all = pairs.map(_.flatMap((l, r) => List(l, r)))
   }
 
+  import ordering.mkOrderingOps
+
   override def star1Task: Task = lines =>
-    inputFormat.pairs(lines.toVector).zipWithIndex.foldLeft(0) {
-      case (acc, ((x, y), i)) if x < y => acc + i + 1
-      case (acc, _) => acc
-    }
+    inputFormat.pairs(lines.toVector)
+      .zipWithIndex
+      .filter { case ((x, y), i) => x < y }
+      .map(_._2 + 1)
+      .sum
 
   override def star2Task: Task = lines =>
-    val d1 = eList(eList(Number(2)))
-    val d2 = eList(eList(Number(6)))
+    val d1 = EList(EList(Number(2) :: Nil) :: Nil)
+    val d2 = EList(EList(Number(6) :: Nil) :: Nil)
     val ls = (d1 :: d2 :: inputFormat.all(lines.toVector)).sorted
     (ls.indexOf(d1) + 1) * (ls.indexOf(d2) + 1)
 
