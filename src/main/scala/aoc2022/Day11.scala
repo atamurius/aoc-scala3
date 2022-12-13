@@ -23,7 +23,7 @@ case object Day11 extends aoc2022.Day:
     def inspected() = copy(items = Vector.empty, inspectedCount = inspectedCount + items.size)
 
   val monkeysFormat: lines.Format[Map[MonkeyId, Monkey]] = {
-    val id = line("Monkey " *> line.takeTerminatedWith(':').map(_.mkString))
+    val id = line("Monkey " *> chunkUntil(':').asString <* ":")
     val monkey = for
       items     <- line("  Starting items: " *> numberAs[Item].delimitedBy(", "))
       operation <- line(
@@ -34,8 +34,8 @@ case object Day11 extends aoc2022.Day:
         }
       )
       test      <- line("  Test: divisible by " *> numberAs[Int])
-      ifTrue    <- line("    If true: throw to monkey " *> line.rest.asString)
-      ifFalse   <- line("    If false: throw to monkey " *> line.rest.asString)
+      ifTrue    <- line("    If true: throw to monkey " *> line.any.asString)
+      ifFalse   <- line("    If false: throw to monkey " *> line.any.asString)
     yield Monkey(items, operation, test, ifTrue, ifFalse)
 
     (id <*> monkey).delimitedBy(lines.blank).map(_.toMap)

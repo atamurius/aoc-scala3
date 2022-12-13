@@ -9,10 +9,11 @@ import scala.languageFeature.implicitConversions
 
 object parse:
   object lines extends FormatOf[String]:
-    val blank: this.Format[Unit] = takeOne.expect(_.isBlank, "blank line expected").unit
+    val blank: this.Format[Unit] = single.expect(_.isBlank, "blank line expected").unit
+
   object line extends FormatOf[Char]:
     def apply[T](f: this.Format[T]): lines.Format[T] =
-      lines.takeOne.mapWithError(line => f.parseFully(line.mkString))
+      lines.single.mapWithError(line => f.parseFully(line.mkString))
 
   implicit def pattern(p: Regex): line.Format[String] = Format { it =>
     p.findPrefixOf(it.mkString).map(s => (s, it.drop(s.length))).toRight(s"Can't find $p")
@@ -20,7 +21,7 @@ object parse:
   def numberAs[T: Numeric]: line.Format[T] =
     pattern("[+-]?\\d+(\\.\\d+)?".r).mapWithError(x => Numeric[T].parseString(x).toRight(s"Invalid number $x"))
 
-  implicit def stringAsFormatLiteral(s: String): line.Format[String] = line.literal(s).as(s)
+  implicit def stringAsFormatLiteral(s: String): line.Format[String] = literal(s).as(s)
 
   extension (l: line.Format[Iterable[Char]]) def asString: line.Format[String] = l.map(_.mkString)
 
@@ -108,28 +109,17 @@ object parse:
 
     val unit: Format[Unit] = const(())
 
-    def rest: Format[Data] = Format(in => Right(in -> Nil))
+    def any: Format[Data] = Format(in => Right(in -> Nil))
 
     val empty: Format[Unit] = Format.empty[I]
 
-    def takeUpTo(n: Int): Format[Data] = Format(in => Right(in splitAt n))
+    def atLeast(n: Int): Format[Data] = Format(in => Right(in splitAt n))
 
-    def takeOne: Format[I] = Format { in =>
+    def single: Format[I] = Format { in =>
       if in.isEmpty then Left("empty input") else Right(in.head -> in.tail)
     }
 
-    def take(n: Int): Format[Data] = takeUpTo(n).expect(_.size == n, s"expected chunk of $n")
-
-    def literal(s: Data): Format[Data] = takeUpTo(s.size).expect(_ == s, s"expected $s")
-
-    def takeWhile(cond: I => Boolean): Format[Data] = Format { in =>
-      val t = in.takeWhile(cond)
-      Right(t -> in.drop(t.size))
-    }
-
-    def takeUntil(end: I): Format[Data] = takeWhile(_ != end)
-
-    def takeTerminatedWith(end: I): Format[Data] = takeUntil(end) <* literal(Seq(end))
+    def exactly(n: Int): Format[Data] = atLeast(n).expect(_.size == n, s"expected chunk of $n")
 
   end FormatOf
 
@@ -137,3 +127,19 @@ object parse:
     lazy val evaluated = format
     Format(in => evaluated.parse(in))
   }
+
+  def literal[I](s: Iterable[I]): Format[s.type, I] = Format { in =>
+    val (head, tail) = in.splitAt(s.size)
+    if head != s then Left(s"Expected $s but got ${in.take(s.size + 10)}...")
+    else Right(s -> tail)
+  }
+
+  def chunkWhile[I](cond: I => Boolean): Format[Iterable[I], I] = Format { in =>
+    val t = in.takeWhile(cond)
+    Right(t -> in.drop(t.size))
+  }
+
+  def chunkUntil[I](end: I): Format[Iterable[I], I] = chunkWhile(_ != end)
+
+  def chunkUpTo[I](end: I): Format[Iterable[I], I] = (chunkUntil(end) <*> literal(Seq(end))).map(_ ++ _)
+
