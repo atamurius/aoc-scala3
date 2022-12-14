@@ -34,6 +34,10 @@ package object common {
         terminated = last(t)
         t
     }
+    final def last: Option[T] =
+      var t = it.nextOption()
+      while it.hasNext do t = it.nextOption()
+      t
 
   def unfoldIterator[T](init: T)(next: T => Option[T]): Iterator[T] =
     Iterator(init) ++ Iterator.unfold(init)(next(_).map(x => (x,x)))
