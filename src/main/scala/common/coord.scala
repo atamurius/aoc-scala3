@@ -188,3 +188,16 @@ object coord:
 
     val size: Int = 4
   }
+
+  case class Long2(x: Long, y: Long):
+    override def toString: String = this.show
+    
+  given Vec[Long2] with
+    type Item = Long
+    override val size: Int = 2
+
+    override def build(xs: IterableOnce[Long]): Long2 =
+      val it = xs.iterator
+      Long2(it.next(), it.next())
+      
+    extension (v: Long2) def components: Iterator[Long] = Iterator(v.x, v.y)
