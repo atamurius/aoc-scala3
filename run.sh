@@ -16,7 +16,7 @@ fi
 
 if [ "$1" == "--assembly" ]; then
   sbt assembly
-  exec java -cp "target/scala-${SCALA_VERSION}/advent-of-code-scala3-assembly-1.0.0.jar" "${2}.Main" ${@:3}
+  exec java -cp "target/scala-${SCALA_VERSION}/advent-of-code-scala3-assembly-1.0.0.jar" -Xmx4g "${2}.Main" ${@:3}
 else
   exec sbt --warn "runMain ${1}.Main ${@:2}"
 fi

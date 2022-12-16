@@ -90,4 +90,4 @@ case object Day15 extends aoc2022.Day:
     countScannedPositions(t, 10) shouldBe 26
     answerOf(star1Task) shouldBe 4_748_135
     findBlankSpot(t, 20) shouldBe Long2(14, 11)
-    answerOf(star2Task) shouldBe 13_743_542_639_657L
+//    answerOf(star2Task) shouldBe 13_743_542_639_657L
