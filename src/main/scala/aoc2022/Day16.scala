@@ -31,13 +31,14 @@ case object Day16 extends Day:
     def statesFrom(state: State, openedValves: Set[Valve]): Vector[(Valve, State)] =
       for
         (valve, rate) <- valves.toVector if !openedValves(valve) if rate > 0
-        distance = path(state.current, valve)
-        timeLeft = state.timeLeft - distance - 1 if timeLeft >= 0
+        timeLeft = timeLeftAfterOpening(state, valve) if timeLeft >= 0
       yield valve -> state.copy(
         current = valve,
         openedValves = state.openedValves + (valve -> timeLeft),
         timeLeft = timeLeft
       )
+
+    def timeLeftAfterOpening(state: State, valve: Valve): Int = state.timeLeft - path(state.current, valve) - 1
 
   end Tunnels
 
@@ -52,7 +53,7 @@ case object Day16 extends Day:
     val tunnels = data.map { case ((from, _), to) => from -> to }.toMap withDefaultValue Nil
     Tunnels(valves, tunnels)
 
-  override val timeout = 5.minutes
+  override val timeout = 1.minute
 
   override def star1Task: Task = lines =>
     val tunnels = readTunnels(lines)
@@ -61,8 +62,8 @@ case object Day16 extends Day:
     var bestState = Option.empty[State]
 
     def findMaxPressureDropped(state: State): Unit = {
-      val estimatedPressure = tunnels.valves
-        .map((v, r) => r * state.openedValves.getOrElse(v, state.timeLeft - 1))
+      val estimatedPressure = tunnels.valves.view
+        .map((v, r) => r * state.openedValves.getOrElse(v, tunnels.timeLeftAfterOpening(state, v) max 0))
         .sum
       if estimatedPressure > bestValue then
         val nextStates = tunnels.statesFrom(state, state.openedValves.keySet)
@@ -71,7 +72,6 @@ case object Day16 extends Day:
           if pressure > bestValue then
             bestValue = pressure
             bestState = Some(state)
-            println(s"Max so far: $pressure : ${state.openedValves.toVector.sortBy(-_._2).mkString(", ")}")
         else
           for (_, state) <- nextStates do findMaxPressureDropped(state)
       end if
@@ -87,11 +87,13 @@ case object Day16 extends Day:
     var bestState = Option.empty[(State, State)]
 
     def findMaxPressureDropped(state1: State, state2: State): Unit =
-      val estimatedPressure = tunnels.valves
-        .map((v, r) =>
-          r * state1.openedValves.get(v).orElse(state2.openedValves.get(v))
-            .getOrElse((state1.timeLeft max state2.timeLeft) - 1)
-        )
+      val estimatedPressure = tunnels.valves.view
+        .map { (v, r) => r * (
+          state1.openedValves.get(v) orElse
+            state2.openedValves.get(v) getOrElse (
+            tunnels.timeLeftAfterOpening(state1, v) max
+              tunnels.timeLeftAfterOpening(state2, v) max 0))
+        }
         .sum
       if estimatedPressure > bestValue then
         val openedValves = state1.openedValves.keySet ++ state2.openedValves.keySet
@@ -102,14 +104,14 @@ case object Day16 extends Day:
           if pressure > bestValue then
             bestValue = pressure
             bestState = Some((state1, state2))
-            println(s"Max so far: $pressure [1] ${state1.openedValves.toVector.sortBy(-_._2).mkString(", ")} [2] ${state2.openedValves.toVector.sortBy(-_._2).mkString(", ")}")
         else
           def atLeastCurrentState(s: State, ss: Vector[(Valve, State)]) =
             if ss.isEmpty then Iterator(None -> s) else ss.iterator.map((v, s) => (Some(v), s))
+          val isFirstMove = state1.openedValves.isEmpty && state1.openedValves.isEmpty
           for
             (v1, s1) <- atLeastCurrentState(state1, nextStates1)
             (v2, s2) <- atLeastCurrentState(state2, nextStates2)
-            if v1 != v2
+            if v1 != v2 && (!isFirstMove || v2.get > v1.get)
           do findMaxPressureDropped(s1, s2)
 
     findMaxPressureDropped(State(timeLeft = 26), State(timeLeft = 26))
