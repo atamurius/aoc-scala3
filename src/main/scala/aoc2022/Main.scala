@@ -18,4 +18,5 @@ object Main extends common.Runner(
   Day15,
   Day16,
   Day17,
+  Day18,
 )

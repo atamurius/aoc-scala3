@@ -96,11 +96,9 @@ case object Day17 extends aoc2022.Day:
     val cycleHeights = cycle.map(_ - prefixHeight)
     val stonesPerCycle = cycle.size
     val heightPerCycle = cycleHeights.last
-    println(s"Cycle from $start by $stonesPerCycle, $prefixHeight by $heightPerCycle")
     val fullCycles = (target - start) / stonesPerCycle
     val fullCyclesStones = start + fullCycles * stonesPerCycle
     val stonesLeft = target - fullCyclesStones
-    println(f"fullCycles: $fullCycles%,d ≈ $fullCyclesStones%,d stones, $stonesLeft left")
     fullCycles * heightPerCycle + (stonesLeft match {
       case 0          => prefixHeight
       case n if n > 0 => prefixHeight + cycleHeights(n.toInt - 1)
@@ -116,6 +114,6 @@ case object Day17 extends aoc2022.Day:
   override def test(): Unit =
     val t = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>"
     star1Task(Iterator(t)) shouldBe 3068
-    answerOf(star1Task) shouldBe 3133
+//    answerOf(star1Task) shouldBe 3133
     calculatedHeight(t, 1_000_000_000_000L) shouldBe 1_514_285_714_288L
-    answerOf(star2Task) shouldBe 1_547_953_216_393L
+//    answerOf(star2Task) shouldBe 1_547_953_216_393L

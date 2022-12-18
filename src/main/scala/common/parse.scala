@@ -143,3 +143,5 @@ object parse:
 
   def chunkUpTo[I](end: I): Format[Iterable[I], I] = (chunkUntil(end) <*> literal(Seq(end))).map(_ ++ _)
 
+  extension[T, I] (t: Format[T, I]) def *: [TT <: Tuple](tt: Format[TT, I]): Format[T *: TT, I] =
+    for t <- t; tt <- tt yield t *: tt

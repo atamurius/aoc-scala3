@@ -59,6 +59,8 @@ object coord:
     def apply[C](using C: Vec[C]): C.type = C
 
   def zero[C](using V: Vec[C])(using N: Numeric[V.Item]): C = V.build(Iterator.continually(N.zero).take(V.size))
+  
+  def unit[C](using V: Vec[C])(using N: Numeric[V.Item]): C = V.build(Iterator.continually(N.one).take(V.size))
 
   def cubeAt[C](center: C)(using V: Vec[C])(using N: Numeric[V.Item]): Iterator[C] =
     val values = Seq(N.one, N.zero, N.negate(N.one))
