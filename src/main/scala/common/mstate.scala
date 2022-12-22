@@ -1,6 +1,7 @@
 package common
 
-import scala.util.control.TailCalls._
+import scala.annotation.tailrec
+import scala.util.control.TailCalls.*
 
 object mstate:
   /**
@@ -10,10 +11,21 @@ object mstate:
    */
   type MState[S, +T] = S => TailRec[IterableOnce[(S, T)]]
 
-  extension[T](xs: IterableOnce[T]) def flatTraverse[R](f: T => TailRec[IterableOnce[R]]): TailRec[IterableOnce[R]] =
-    xs.iterator.foldLeft(done(Iterator.empty[R])) { (acc, t) =>
-      for acc <- acc; t <- f(t) yield acc ++ t
-    }
+  extension[T](xs: IterableOnce[T])
+    def flatTraverse[R](f: T => TailRec[IterableOnce[R]]): TailRec[IterableOnce[R]] =
+      xs.iterator.foldLeft(done(Iterator.empty[R])) { (acc, t) =>
+        for acc <- acc; t <- f(t) yield acc ++ t
+      }
+
+    def traverseWide[S](f: T => MState[S, Unit]): MState[S, Unit] = state =>
+      @tailrec def recur(ts: Iterator[T], current: Set[S]): Set[S] =
+        if ts.isEmpty then current
+        else
+          val t = ts.next()
+          println(s"at $t: ${current.size}")
+          val next = f(t)
+          recur(ts, current.flatMap(next(_).result.iterator.map(_._1)))
+      done(recur(xs.iterator, Set(state)).iterator.map(_ -> ()))
 
   extension[S, T](run: MState[S, T])
     def map[R](f: T => R): MState[S, R] = run(_).map(_.iterator.map((s, t) => (s, f(t))))
@@ -40,6 +52,10 @@ object mstate:
   def currentState[S]: MState[S, S] = extract[S](identity)
 
   def updateStates[S](update: S => Iterable[S]): MState[S, Unit] = s => done(update(s).map(_ -> ()))
+
+  def update[S](f: S => S): MState[S, Unit] = updateStates(f andThen (Seq(_)))
+
+  def setState[S](s: S): MState[S, Unit] = updateStates(_ => Seq(s))
 
   def someOf[S, T](ts: IterableOnce[T]): MState[S, T] = s => done(ts.iterator.map(s -> _).toVector)
 

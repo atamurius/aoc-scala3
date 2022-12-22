@@ -59,8 +59,8 @@ object coord:
     def apply[C](using C: Vec[C]): C.type = C
 
   def zero[C](using V: Vec[C])(using N: Numeric[V.Item]): C = V.build(Iterator.continually(N.zero).take(V.size))
-  
-  def unit[C](using V: Vec[C])(using N: Numeric[V.Item]): C = V.build(Iterator.continually(N.one).take(V.size))
+
+  def one[C](using V: Vec[C])(using N: Numeric[V.Item]): C = V.build(Iterator.continually(N.one).take(V.size))
 
   def cubeAt[C](center: C)(using V: Vec[C])(using N: Numeric[V.Item]): Iterator[C] =
     val values = Seq(N.one, N.zero, N.negate(N.one))
@@ -155,6 +155,8 @@ object coord:
       case E => S
       case S => W
       case W => N
+      
+    def flip: Dir = left.left
 
     def turn(left: Boolean, times: Int): Dir =
       if left then (1 to times).foldLeft(this)((d, _) => d.left)
@@ -168,7 +170,7 @@ object coord:
     val R: Int2 = Dir.E.delta
     val U: Int2 = Dir.S.delta
     val D: Int2 = Dir.N.delta
-  
+
   case class Int3(x: Int, y: Int, z: Int):
     override def toString: String = this.show
 
@@ -199,7 +201,7 @@ object coord:
 
   case class Long2(x: Long, y: Long):
     override def toString: String = this.show
-    
+
   given Vec[Long2] with
     type Item = Long
     override val size: Int = 2
@@ -207,5 +209,5 @@ object coord:
     override def build(xs: IterableOnce[Long]): Long2 =
       val it = xs.iterator
       Long2(it.next(), it.next())
-      
+
     extension (v: Long2) def components: Iterator[Long] = Iterator(v.x, v.y)

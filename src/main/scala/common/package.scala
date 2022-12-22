@@ -21,7 +21,7 @@ package object common {
         acc + (p -> (acc(p) + 1))
       }
 
-  extension[T](it: Iterator[T]) 
+  extension[T](it: Iterator[T])
     def at(i: Int): T = it.drop(i).next()
     def takeUntil(last: T => Boolean): Iterator[T] = new Iterator[T] {
       private var terminated = false
@@ -43,16 +43,16 @@ package object common {
     Iterator(init) ++ Iterator.unfold(init)(next(_).map(x => (x,x)))
 
   extension[K, V](map: Map[K, V])(using V: Numeric[V])
-    def plusAt(key: K, delta: V): Map[K, V] = map + (key -> V.plus(map.getOrElse(key, V.zero), delta))
+    def plusAt(key: K, delta: V = V.one): Map[K, V] = map + (key -> V.plus(map.getOrElse(key, V.zero), delta))
 
   extension[K, V](map: Map[K, V])
     def putMerge(key: K, value: V)(merge: (V, V) => V): Map[K, V] =
       map.updated(key, map.get(key).fold(value)(merge(_, value)))
 
-    def mapAt(key: K)(f: V => V): Map[K, V] = map.updated(key, f(map(key))) 
-    
-    def merge(that: Map[K, V])(m: (V, V) => V): Map[K, V] =
-      map.foldLeft(that) {
+    def mapAt(key: K)(f: V => V): Map[K, V] = map.updated(key, f(map(key)))
+
+    def merge(that: Iterable[(K, V)])(m: (V, V) => V): Map[K, V] =
+      that.foldLeft(map) {
         case (acc, (key, value)) => acc.putMerge(key, value)(m)
       }
 

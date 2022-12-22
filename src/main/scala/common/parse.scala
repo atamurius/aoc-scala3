@@ -1,10 +1,11 @@
 package common
 
+import scala.annotation.tailrec
 import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 import scala.util.matching.Regex
-
 import scala.languageFeature.implicitConversions
 
 object parse:
@@ -26,6 +27,7 @@ object parse:
   extension (l: line.Format[Iterable[Char]]) def asString: line.Format[String] = l.map(_.mkString)
 
   case class Format[+T, I](parse: Iterable[I] => Either[String, (T, Iterable[I])]):
+    outer =>
 
     private def tryE[T](f: => T): Either[String, T] =
       try Right(f) catch { case NonFatal(t) => Left(s"${t.getClass.getSimpleName}: ${t.getMessage}") }
@@ -83,7 +85,13 @@ object parse:
 
     def oneOrMore: Format[List[T], I] = repeated.expect(_.nonEmpty, "expected at least one item")
 
-    def repeated: Format[List[T], I] = Format.empty.as(Nil) orElse flatMap(x => repeated.map(x :: _))
+    def repeated: Format[List[T], I] =
+      @tailrec def recur(in: Iterable[I], res: mutable.Builder[T, List[T]]): Either[String, (List[T], Iterable[I])] =
+        if in.isEmpty then Right((res.result(), in))
+        else outer.parse(in) match
+          case Left(error) => Left(error)
+          case Right((t, rest)) => recur(rest, res += t)
+      Format(in => recur(in, List.newBuilder))
 
     def parseFully(data: Iterable[I]): Either[String, T] = parse(data) match
       case Left(error) => Left(s"Parsing failed: $error")

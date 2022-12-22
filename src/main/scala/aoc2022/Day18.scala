@@ -18,7 +18,7 @@ case object Day18 extends Day:
   override def star2Task: Task = lines =>
     val points = format(lines.toSeq).toSet
     val (lt, rb) = boundingBox(points)
-    val area = (lt - unit, rb + unit)
+    val area = (lt - one, rb + one)
     @tailrec def fill(front: Set[Int3], settled: Set[Int3]): Set[Int3] =
       val next = front.view.flatMap(_.neighbours).filter { p =>
         (p in area) && !settled(p) && !points(p) && !front(p)
