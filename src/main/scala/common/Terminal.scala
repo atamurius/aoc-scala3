@@ -1,6 +1,7 @@
 package common
 
-import scala.concurrent.duration._
+import java.io.StringWriter
+import scala.concurrent.duration.*
 
 object Terminal:
   val ESC = "\u001b"

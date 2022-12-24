@@ -155,7 +155,7 @@ object coord:
       case E => S
       case S => W
       case W => N
-      
+
     def flip: Dir = left.left
 
     def turn(left: Boolean, times: Int): Dir =
@@ -166,10 +166,10 @@ object coord:
       turn(left = true, (360 + degrees) % 360 / 90)
 
   object GridDir:
-    val L: Int2 = Dir.W.delta
-    val R: Int2 = Dir.E.delta
-    val U: Int2 = Dir.S.delta
-    val D: Int2 = Dir.N.delta
+    val L: Dir = Dir.W
+    val R: Dir = Dir.E
+    val U: Dir = Dir.S
+    val D: Dir = Dir.N
 
   case class Int3(x: Int, y: Int, z: Int):
     override def toString: String = this.show

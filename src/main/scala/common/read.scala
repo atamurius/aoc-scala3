@@ -60,7 +60,7 @@ object read:
     def contains(p: Int2) = (lines.indices contains p.y) && (lines.head.indices contains p.x)
     def get(p: Int2) = lines.lift(p.y).flatMap(_.lift(p.x))
     def get(ps: IterableOnce[Int2]): Iterator[T] = ps.iterator.flatMap(get)
-    def apply(p: Int2) = get(p).get
+    def apply(p: Int2): T = get(p).get
     def update(p: Int2, value: T) = copy(lines.updated(p.y, lines(p.y).updated(p.x, value)))
     def update(ps: IterableOnce[(Int2, T)]) = copy(
       ps.iterator.foldLeft(lines) {

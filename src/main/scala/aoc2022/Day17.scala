@@ -58,8 +58,8 @@ case object Day17 extends aoc2022.Day:
       while !isSteady do
         val (wind, windId) = winds.next()
         lastWindId = windId
-        if !clash(pos + wind) then pos = pos + wind
-        if !clash(pos + GridDir.D) then pos = pos + GridDir.D
+        if !clash(pos + wind.delta) then pos = pos + wind.delta
+        if !clash(pos + GridDir.D.delta) then pos = pos + GridDir.D.delta
         else isSteady = true
 
       steady ++ shape.view.map(_ + pos) -> (shapeId, lastWindId)
