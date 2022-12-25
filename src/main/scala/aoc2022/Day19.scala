@@ -101,10 +101,17 @@ case object Day19 extends aoc2022.Day:
             else best
           }
           Nil
+        else if timeLeft == 1 then Vector(state.afterTime(1))
         else
+          def notAtMaxProduction(r: String) = max.get(r).forall(_ > state.production.getOrElse(r, 0))
+          def allowedNow(r: String) = r match
+            case `resource`         => true
+            case r if timeLeft == 3 => state.requirements(resource).get(r).exists(_ > state.resources(r))
+            case _                  => timeLeft > 3
+
           val build =
             for robot <- state.robotTypes.toVector
-                if max.get(robot).forall(_ > state.production.getOrElse(robot, 0))
+                if notAtMaxProduction(robot) && allowedNow(robot)
                 updated <- state.buildInAnyTime(robot)
               yield updated
           val trimmed = build.filter(_.time <= limit)
@@ -123,7 +130,6 @@ case object Day19 extends aoc2022.Day:
       .sum
 
   override def star2Task: Task = lines =>
-    println(Color.yellow("Star 2 Task --------------------------- (NOT 13110!)"))
     val blueprints = parse(lines)
     (1 to 3)
       .map(blueprints(_))
@@ -145,11 +151,11 @@ case object Day19 extends aoc2022.Day:
     State(blueprint1, production = Map("ore" -> 5)).buildInAnyTime("ore").map(_.time) shouldBe Some(2)
     State(blueprint1, production = Map("ore" -> 10)).buildInAnyTime("ore").map(_.time) shouldBe Some(2)
 
-//    produceMax(state(1), "geode", 24) shouldBe 9
-//    produceMax(state(2), "geode", 24) shouldBe 12
+    produceMax(state(1), "geode", 24) shouldBe 9
+    produceMax(state(2), "geode", 24) shouldBe 12
 //    produceMax(state(1), "geode", 32) shouldBe 56
 //    produceMax(state(2), "geode", 32) shouldBe 62
-//
+
 //    def t2 =
 //      """
 //        |Blueprint 1: Each ore robot costs 3 ore. Each clay robot costs 3 ore. Each obsidian robot costs 2 ore and 19 clay. Each geode robot costs 2 ore and 12 obsidian.

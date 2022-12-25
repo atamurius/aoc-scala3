@@ -19,8 +19,8 @@ fi
 if [ "$1" == "--assembly" ]; then
   YEAR="${2#aoc}"
   sbt assembly
-  exec java -cp "target/scala-${SCALA_VERSION}/advent-of-code-scala3-assembly-1.0.0.jar" \
-    -Xmx6g "${YEAR}" ${@:3}
+  exec java -Xmx6g -jar "target/scala-${SCALA_VERSION}/advent-of-code-scala3-assembly-1.0.0.jar" \
+     "${YEAR}" ${@:3}
 else
   YEAR="${1#aoc}"
   exec sbt --warn "run ${YEAR} ${@:2}"
