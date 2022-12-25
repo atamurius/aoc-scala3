@@ -6,6 +6,8 @@ import common.*
 
 import scala.annotation.tailrec
 import scala.concurrent.duration.*
+import scala.collection.parallel.immutable.{ParIterable, ParSet, ParVector}
+import scala.collection.parallel.CollectionConverters.*
 
 case object Day19 extends aoc2022.Day:
 
@@ -27,6 +29,9 @@ case object Day19 extends aoc2022.Day:
     production: Map[String, Int] = Map("ore" -> 1),
     time: Int = 0,
   ):
+
+    def robotTypes: Set[String] = requirements.keySet
+
     override def toString: String =
       val state = (production.keySet ++ resources.keySet).map { res =>
         s"$res: ${resources(res)} +${production.getOrElse(res, 0)}"
@@ -41,84 +46,89 @@ case object Day19 extends aoc2022.Day:
     def withRobot(robot: String): State =
 //      println(s"start building $robot-collecting robot spending ${requirements(robot).map((r, q) => s"$q $r").mkString(", ")}")
       val resourcesLeft = (resources merge requirements(robot))(_ - _)
-      if resourcesLeft.values.exists(_ < 0) then sys.error(s"Not enought resources to create $robot: $this")
+      if resourcesLeft.values.exists(_ < 0) then sys.error(s"Not enough resources to create $robot: $this")
       else copy(
         time = time + 1,
         production = production.plusAt(robot),
         resources = (resourcesLeft merge production)(_ + _),
       )
 
+    def buildInAnyTime(robot: String): Option[State] =
+      val req = requirements(robot)
+      if req.keys.exists(!production.contains(_)) then None
+      else if canBuild(robot) then Some(withRobot(robot))
+      else
+        val time = req.view.map((res, q) => (q - resources(res)).toDouble / production(res)).max
+        Some(afterTime(math.ceil(time).toInt).withRobot(robot))
+
     def debug(): this.type = { println(this);  this }
 
-    def addRobot(robot: String, limit: Option[Int]): Option[State] =
-      if limit.exists(_ <= time) then None
-      else
-        val timeToProduceRes = requirements(robot).transform { (resource, amount) =>
-          val need = amount - resources(resource) max 0
-          production.get(resource).map { rate =>
-            math.ceil(need.toDouble / rate).toInt
-          }
-        }
-        val withCurrentProduction = timeToProduceRes.values
-          .reduce((a, b) => (a zip b).map(_ max _))
-          .map(t => afterTime(t).withRobot(robot))
-          .filter(_.time < limit.getOrElse(Int.MaxValue))
+    def canBuild(robot: String, maxAllowed: Option[Int] = None): Boolean =
+      maxAllowed.forall(_ > production.getOrElse(robot, 0)) &&
+        requirements(robot).forall(resources(_) >= _)
 
-        val best = timeToProduceRes.toVector
-          .filter(_._1 != robot)
-          .sortBy(-_._2.getOrElse(1_000_000))
-          .foldLeft(withCurrentProduction) {
-            case (best, (resource, _)) =>
-              val newLimit = best.map(_.time) orElse limit
-              val improved = addRobot(resource, newLimit).flatMap(_.addRobot(robot, newLimit))
-              if improved.exists(i => best.forall(_.time > i.time)) then improved
-              else best
-          }
+    def trimResources(limit: Int): State =
+      copy(resources = resources.transform((r, v) => if r == "geode" then v else v min limit) withDefaultValue 0)
 
-        println(s"Producing more $robot at $this ->")
-        println(s"  with current production: $withCurrentProduction")
-        println(s"  best: $best")
-        best
+  def produceMax(state: State, resource: String, limit: Int): Int =
+    println(Color.bright(s"\nEvaluating: ${state.requirements}"))
 
-    @tailrec final def produceMax(resource: String, limit: Int): State =
-      addRobot(resource, Some(limit)) match
-        case None => afterTime(limit - time)
-        case Some(next) =>
-          println(s"---")
-          next.produceMax(resource, limit)
-
-  def produceMax(state: State, resource: String, limit: Int): State =
     val max = state.requirements
       .map { (res, _) =>
         res -> state.requirements.filter(_._1 != res).values.map(_.getOrElse(res, 0)).max
       }
-      .map { (res, m) => (res, if m == 0 then Int.MaxValue else m) }
+      .filter(_._2 > 0)
     println(s"Production cap: $max")
 
-    val ordered = Vector("geode", "obsidian", "clay", "ore")
+    @tailrec def estimate(state: State): State =
+      if state.time == limit then state
+      else Seq("geode", "obsidian", "clay", "ore").find(r => state.canBuild(r, max.get(r))) match
+        case None    => estimate(state.afterTime(1))
+        case Some(r) => estimate(state.withRobot(r))
 
-    def canBuildFrom(current: State) =
-      ordered
-        .filter { robot => current.requirements(robot).forall(current.resources(_) >= _) }
-        .filter { res => current.production.getOrElse(res, 0) < max(res) }
+    val best = Atomic(state)
+    @tailrec def bfs(ongoing: ParIterable[State]): State =
+      if ongoing.isEmpty then
+        println(Color.green(s"Best: ${best()}"))
+        return best()
+      val minTime = ongoing.iterator.map(_.time).min
+      println(f"[~$minTime%2d]: ${ongoing.size}%,d states. Current best: ${best()}")
+      bfs(ongoing.flatMap { state =>
+        val timeLeft = limit - state.time
+        if timeLeft == 0 then
+          best.update { best =>
+            if best.resources(resource) < state.resources(resource) then state
+            else best
+          }
+          Nil
+        else
+          val build =
+            for robot <- state.robotTypes.toVector
+                if max.get(robot).forall(_ > state.production.getOrElse(robot, 0))
+                updated <- state.buildInAnyTime(robot)
+              yield updated
+          val trimmed = build.filter(_.time <= limit)
+          if build.size != trimmed.size then trimmed :+ state.afterTime(timeLeft)
+          else trimmed
+      })
 
-    def search(current: State): State =
-      current.debug()
-      if current.time == limit then current
-      else
-        val buildOre = current.production.getOrElse("ore", 0) < max("ore")
-        val canBuild = canBuildFrom(current).filter(r => !buildOre || r == "ore")
-        canBuild.headOption match
-          case None => search(current.afterTime(1))
-          case Some(robot) => search(current.withRobot(robot))
-    search(state)
+    bfs(ParSet(state)).resources(resource)
 
-  override val timeout = 2.minutes
 
-//  override def star1Task: Task = lines =>
-//    parse(lines)
-//      .map((id, s) => id * produceMax(s, "geode", 24).resources("geode"))
-//      .sum
+  override val timeout = 10.minutes
+
+  override def star1Task: Task = lines =>
+    parse(lines)
+      .map((id, s) => id * produceMax(s, "geode", 24))
+      .sum
+
+  override def star2Task: Task = lines =>
+    println(Color.yellow("Star 2 Task --------------------------- (NOT 13110!)"))
+    val blueprints = parse(lines)
+    (1 to 3)
+      .map(blueprints(_))
+      .map(produceMax(_, "geode", 32))
+      .product
 
   override def test(): Unit =
     val t =
@@ -126,34 +136,24 @@ case object Day19 extends aoc2022.Day:
         |Blueprint 1: Each ore robot costs 4 ore. Each clay robot costs 2 ore. Each obsidian robot costs 3 ore and 14 clay. Each geode robot costs 2 ore and 7 obsidian.
         |Blueprint 2: Each ore robot costs 2 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 8 clay. Each geode robot costs 3 ore and 12 obsidian.
         |""".stripMargin.trim.linesIterator.toVector
-//    val state = parse(t)
-//    produceMax(state(1), "geode", 24).resources("geode") shouldBe 9
-//    produceMax(state(2), "geode", 24).resources("geode") shouldBe 12
+    val state = parse(t)
+    val blueprint1 = state(1).requirements
+    State(blueprint1).buildInAnyTime("ore").map(_.time) shouldBe Some(5)
+    State(blueprint1, production = Map("ore" -> 2)).buildInAnyTime("ore").map(_.time) shouldBe Some(3)
+    State(blueprint1, production = Map("ore" -> 3)).buildInAnyTime("ore").map(_.time) shouldBe Some(3)
+    State(blueprint1, production = Map("ore" -> 4)).buildInAnyTime("ore").map(_.time) shouldBe Some(2)
+    State(blueprint1, production = Map("ore" -> 5)).buildInAnyTime("ore").map(_.time) shouldBe Some(2)
+    State(blueprint1, production = Map("ore" -> 10)).buildInAnyTime("ore").map(_.time) shouldBe Some(2)
 
-//    state(2)
-//      .afterTime(1).debug()
-//      .afterTime(1).debug()
-//      .withRobot("ore").debug()
-//      .afterTime(1).debug()
-//      .withRobot("ore").debug()
-//      .withRobot("clay").debug()
-//      .withRobot("clay").debug()
-//      .withRobot("clay").debug()
-//      .withRobot("clay").debug()
-//      .withRobot("clay").debug()
-//      .withRobot("obsidian").debug()
-//      .withRobot("clay").debug()
-//      .withRobot("obsidian").debug()
-//      .withRobot("obsidian").debug()
-//      .withRobot("obsidian").debug()
-//      .withRobot("clay").debug()
-//      .withRobot("obsidian").debug()
-//      .withRobot("geode").debug()
-//      .withRobot("obsidian").debug()
-//      .withRobot("geode").debug()
-//      .withRobot("obsidian").debug()
-//      .withRobot("geode").debug()
-//      .withRobot("obsidian").debug()
-//      .withRobot("geode").debug()
+//    produceMax(state(1), "geode", 24) shouldBe 9
+//    produceMax(state(2), "geode", 24) shouldBe 12
+//    produceMax(state(1), "geode", 32) shouldBe 56
+//    produceMax(state(2), "geode", 32) shouldBe 62
 //
-//    sys.exit()
+//    def t2 =
+//      """
+//        |Blueprint 1: Each ore robot costs 3 ore. Each clay robot costs 3 ore. Each obsidian robot costs 2 ore and 19 clay. Each geode robot costs 2 ore and 12 obsidian.
+//        |Blueprint 2: Each ore robot costs 3 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 19 clay. Each geode robot costs 2 ore and 9 obsidian.
+//        |Blueprint 3: Each ore robot costs 2 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 17 clay. Each geode robot costs 3 ore and 10 obsidian.
+//        |""".stripMargin.trim.linesIterator
+//    star2Task(t2) shouldBe 29348

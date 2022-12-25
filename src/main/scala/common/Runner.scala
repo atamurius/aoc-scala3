@@ -10,7 +10,23 @@ import scala.concurrent.duration._
 import scala.util.Try
 import scala.util.control.NonFatal
 
-abstract class Runner(allDays: Day*) {
+object AutoRunner {
+  def main(args: Array[String]): Unit =
+    if args.length == 0 then
+      Console.err.println(s"Arguments expected: <YEAR> [--both] [--skip-tests] [Day1, DayN, ...]|*")
+      sys.exit(1)
+
+    val year = args.head
+    val days = (1 to 25)
+      .map(i => s"aoc${year}.Day${i}$$")
+      .flatMap(cls => Try(Class.forName(cls)).toOption)
+      .map { cls =>
+        cls.getField("MODULE$").get(null).asInstanceOf[Day]
+      }
+    Runner(days*).main(args.tail)
+}
+
+class Runner(allDays: Day*) {
 
   private def run(name: String)(action: => Any): Boolean =
     try
@@ -33,8 +49,12 @@ abstract class Runner(allDays: Day*) {
     }
 
   def main(args: Array[String]): Unit =
+    val (opts, days) = args.partition(_ startsWith "--")
+    val runBoth      = opts.contains("--both")
+    val skipTests    = opts.contains("--skip-tests")
+
     var failed = false
-    for day <- allDays do
+    for day <- allDays if !skipTests do
       val wait = Promise[Unit]
       val action: Runnable = { () =>
         try
@@ -61,11 +81,6 @@ abstract class Runner(allDays: Day*) {
           failed = true
 
     if failed then sys.exit(1)
-
-    val (runBoth, days) =
-      if args.headOption.contains("--both")
-      then (true, args.tail)
-      else (false, args)
 
     val daysToShow =
       if days.isEmpty then Seq(allDays.last.productPrefix)

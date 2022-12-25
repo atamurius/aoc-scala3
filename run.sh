@@ -2,8 +2,10 @@
 
 SCALA_VERSION="3.0.0"
 
+set -e
+
 if [ -z "$1" ]; then
-  echo "Use ./run.sh [--assembly] aoc<YEAR> [--both] {Day<day-number>} | \\*"
+  echo "Use ./run.sh [--assembly] <YEAR> [--both] [--skip-tests] {Day<day-number>} | \\*"
   echo "  --both means run 1 and 2 tasks"
   echo "Available solutions:"
   for aoc in src/main/scala/aoc*; do
@@ -15,8 +17,11 @@ if [ -z "$1" ]; then
 fi
 
 if [ "$1" == "--assembly" ]; then
+  YEAR="${2#aoc}"
   sbt assembly
-  exec java -cp "target/scala-${SCALA_VERSION}/advent-of-code-scala3-assembly-1.0.0.jar" -Xmx4g "${2}.Main" ${@:3}
+  exec java -cp "target/scala-${SCALA_VERSION}/advent-of-code-scala3-assembly-1.0.0.jar" \
+    -Xmx6g "${YEAR}" ${@:3}
 else
-  exec sbt --warn "runMain ${1}.Main ${@:2}"
+  YEAR="${1#aoc}"
+  exec sbt --warn "run ${YEAR} ${@:2}"
 fi
