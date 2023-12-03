@@ -7,7 +7,7 @@ import common.*
 import scala.collection.Iterator.{continually, iterate}
 import scala.concurrent.duration.*
 
-case object Day17 extends aoc2022.Day:
+case object Day17 extends TypedDay:
 
   val shapes = Vector(
     "####",

@@ -1,8 +1,10 @@
 package aoc2022
 
+import common.TypedDay
+
 import scala.collection.Iterator.{iterate, unfold}
 
-case object Day25 extends Day:
+case object Day25 extends TypedDay:
   def fromSNAFU(s: String): Long =
     val digits = s.reverseIterator.map {
       case '-' => -1

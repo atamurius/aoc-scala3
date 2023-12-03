@@ -1,8 +1,9 @@
 package aoc2022
 
+import common.TypedDay
 import common.parse.*
 
-case object Day21 extends Day:
+case object Day21 extends TypedDay:
   enum Expr:
     case Var(id: String)
     case Val(value: Long)

@@ -1,13 +1,13 @@
 package aoc2022
 
-import common.Color
+import common.{Color, TypedDay}
 import common.read.Board
 import common.parse.*
 import common.coord.*
 
 import scala.annotation.tailrec
 
-case object Day22 extends Day:
+case object Day22 extends TypedDay:
 
   val pathFormat = (numberAs[Int] or "R|L".r).repeated
 

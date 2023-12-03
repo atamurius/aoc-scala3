@@ -1,10 +1,11 @@
 package aoc2022
 
+import common.TypedDay
 import common.parse.*
 
 import scala.annotation.tailrec
 
-case object Day13 extends Day:
+case object Day13 extends TypedDay:
 
   sealed trait EValue
   case class Number(value: Int)          extends EValue

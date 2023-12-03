@@ -2,12 +2,12 @@ package aoc2022
 
 import common.coord.*
 import common.read.Board
-import common.{Color, Edge, Graph, Terminal}
+import common.{Color, Edge, Graph, Terminal, TypedDay}
 
 import scala.concurrent.duration.*
 import scala.math.abs
 
-case object Day12 extends Day:
+case object Day12 extends TypedDay:
   type Grid = Board[Char]
 
   given Graph[Grid] with

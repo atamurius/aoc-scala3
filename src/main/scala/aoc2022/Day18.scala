@@ -1,11 +1,12 @@
 package aoc2022
 
+import common.TypedDay
 import common.coord.*
 import common.parse.*
 
 import scala.annotation.tailrec
 
-case object Day18 extends Day:
+case object Day18 extends TypedDay:
 
   val format = line((numberAs[Int] <* ",") *: (numberAs[Int] <* "," <*> numberAs[Int])).map(Int3.apply.tupled).repeated
 

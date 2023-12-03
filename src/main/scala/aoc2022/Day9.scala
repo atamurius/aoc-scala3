@@ -8,7 +8,7 @@ import scala.concurrent.duration.FiniteDuration
 import scala.math.abs
 import scala.concurrent.duration._
 
-case object Day9 extends aoc2022.Day:
+case object Day9 extends TypedDay:
   val dirs = Map("R" -> Dir.E, "U" -> Dir.S, "D" -> Dir.N, "L" -> Dir.W)
 
   def moveTail(tail: Int2, head: Int2) =

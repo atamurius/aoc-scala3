@@ -1,10 +1,11 @@
 package aoc2022
 
+import common.TypedDay
 import common.coord.*
 
 import scala.math.abs
 
-case object Day10 extends Day:
+case object Day10 extends TypedDay:
   private val AddX = """addx (-?\d+)""".r
 
   def parseRegisterStates(lines: Iterator[String]): Iterator[Int] =

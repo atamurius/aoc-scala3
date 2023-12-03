@@ -9,7 +9,7 @@ import scala.concurrent.duration.*
 import scala.collection.parallel.immutable.{ParIterable, ParSet, ParVector}
 import scala.collection.parallel.CollectionConverters.*
 
-case object Day19 extends aoc2022.Day:
+case object Day19 extends TypedDay:
 
   val format = {
     val word = "\\w+".r

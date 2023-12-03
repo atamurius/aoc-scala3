@@ -7,7 +7,7 @@ import common.*
 
 import scala.collection.Iterator.iterate
 
-case object Day15 extends aoc2022.Day:
+case object Day15 extends TypedDay:
 
   val format = {
     val position = ("x=" *> numberAs[Long] <*", y=" <*> numberAs[Long]) map (Long2(_, _))

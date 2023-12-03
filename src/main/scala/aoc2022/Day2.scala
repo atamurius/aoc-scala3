@@ -1,6 +1,8 @@
 package aoc2022
 
-case object Day2 extends Day:
+import common.TypedDay
+
+case object Day2 extends TypedDay:
   enum Shape:
     case Rock, Paper, Scissors
 

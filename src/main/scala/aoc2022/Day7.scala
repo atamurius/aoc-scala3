@@ -5,7 +5,7 @@ import common.read.*
 
 import scala.annotation.tailrec
 
-case object Day7 extends aoc2022.Day:
+case object Day7 extends TypedDay:
   case class Dir(path: Seq[String]):
     def / (segment: String): Dir = Dir(path :+ segment)
     def withAllParents: Iterator[Dir] = path.inits.map(Dir.apply)

@@ -10,7 +10,7 @@ import scala.collection.Iterator.iterate
 import scala.collection.mutable
 import scala.concurrent.duration._
 
-case object Day24 extends aoc2022.Day:
+case object Day24 extends TypedDay:
 
   case class State(
       board: Board[String],

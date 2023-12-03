@@ -6,7 +6,7 @@ import common.parse.*
 
 import scala.concurrent.duration._
 
-case object Day11 extends aoc2022.Day:
+case object Day11 extends TypedDay:
   type MonkeyId = String
   type Item = Long
   def Item(x: String) = x.toLong

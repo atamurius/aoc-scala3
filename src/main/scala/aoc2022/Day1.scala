@@ -1,8 +1,9 @@
 package aoc2022
 
+import common.TypedDay
 import common.read.*
 
-case object Day1 extends Day:
+case object Day1 extends TypedDay:
   def caloriesPerElf(lines: Input) = lines.lineSeparatedBlocks(_.map(_.toInt).sum)
 
   override def star1Task = caloriesPerElf(_).max

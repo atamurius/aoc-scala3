@@ -1,11 +1,12 @@
 package aoc2022
 
+import common.TypedDay
 import common.read.*
 
 import java.lang.Character.isWhitespace
 import scala.collection.immutable.SortedMap
 
-case object Day5 extends Day:
+case object Day5 extends TypedDay:
 
   def moveCrates(ls: Iterator[String])(takeN: (List[Char], Int) => List[Char]): String =
     val lines = ls.toVector
