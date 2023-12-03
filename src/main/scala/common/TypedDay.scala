@@ -1,6 +1,6 @@
-package aoc2022
+package common
 
-trait Day extends common.Day:
+trait TypedDay extends common.Day:
   type Input = Iterator[String]
   type Task = Input => Any
   

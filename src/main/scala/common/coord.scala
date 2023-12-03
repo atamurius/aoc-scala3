@@ -165,6 +165,11 @@ object coord:
     def turn(degrees: Int): Dir =
       turn(left = true, (360 + degrees) % 360 / 90)
 
+  object Dir:
+    def between(start: Int2, end: Int2): Dir =
+      val delta = end - start
+      Dir.values.find(_.delta == delta).getOrElse(sys.error(s"$start and $end are not neighbours"))
+
   object GridDir:
     val L: Dir = Dir.W
     val R: Dir = Dir.E
