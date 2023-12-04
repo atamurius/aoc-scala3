@@ -5,7 +5,7 @@ import common.read.Board
 import common.coord.*
 import common.coord.Dir.*
 
-case object Day23 extends TypedDay:
+case object Day23 extends TypedDay.Generic:
 
   def simulation(lines: Iterator[String]): Iterator[Set[Int2]] =
     val ps = Board.read(lines, "".r).points

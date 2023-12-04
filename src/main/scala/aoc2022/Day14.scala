@@ -8,7 +8,7 @@ import scala.annotation.tailrec
 import scala.collection.Iterator.{from, iterate}
 import scala.concurrent.duration._
 
-case object Day14 extends TypedDay:
+case object Day14 extends TypedDay.Generic:
   val lineFormat = (numberAs[Int] <* "," <*> numberAs[Int]).map(Int2(_, _)).delimitedBy(" -> ")
   val linesFormat = line(lineFormat).repeated
 

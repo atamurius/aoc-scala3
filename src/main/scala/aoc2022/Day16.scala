@@ -10,7 +10,7 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.*
 import scala.util.Random
 
-case object Day16 extends TypedDay:
+case object Day16 extends TypedDay.Generic:
   val inputFormat: lines.Format[List[((String, Int), List[String])]] = line {
     "Valve " *> chunkUntil(' ').asString <* " has flow rate=" <*> numberAs[Int] <*
       "; tunnels? leads? to valves? ".r <*> chunkUntil(',').asString.delimitedBy(", ")

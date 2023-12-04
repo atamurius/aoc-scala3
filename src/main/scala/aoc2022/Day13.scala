@@ -5,7 +5,7 @@ import common.parse.*
 
 import scala.annotation.tailrec
 
-case object Day13 extends TypedDay:
+case object Day13 extends TypedDay.Generic:
 
   sealed trait EValue
   case class Number(value: Int)          extends EValue

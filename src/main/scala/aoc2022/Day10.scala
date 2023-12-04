@@ -5,7 +5,7 @@ import common.coord.*
 
 import scala.math.abs
 
-case object Day10 extends TypedDay:
+case object Day10 extends TypedDay.Generic:
   private val AddX = """addx (-?\d+)""".r
 
   def parseRegisterStates(lines: Iterator[String]): Iterator[Int] =

@@ -6,7 +6,7 @@ import common.read.Board
 import scala.collection.Iterator.iterate
 import common.coord.*
 
-case object Day8 extends TypedDay:
+case object Day8 extends TypedDay.Generic:
   def readMap(ls: Iterator[String]) = Board.read(ls, "".r).transform((_, x) => x.toInt)
 
   extension (board: Board[Int])

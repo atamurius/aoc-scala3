@@ -2,7 +2,7 @@ package aoc2022
 
 import common.TypedDay
 
-case object Day6 extends TypedDay:
+case object Day6 extends TypedDay.Generic:
   def marker(l: String, len: Int) = l.iterator.sliding(len).zipWithIndex.collectFirst {
     case (xs, i) if xs.toSet.size == xs.size => i + len
   }

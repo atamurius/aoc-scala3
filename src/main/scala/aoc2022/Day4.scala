@@ -2,7 +2,7 @@ package aoc2022
 
 import common.TypedDay
 
-case object Day4 extends TypedDay:
+case object Day4 extends TypedDay.Generic:
   case class Segment(left: Int, right: Int):
     def contains(x: Int) = x >= left && x <= right
     def contains(other: Segment): Boolean = contains(other.left) && contains(other.right)

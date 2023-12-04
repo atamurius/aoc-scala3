@@ -7,7 +7,7 @@ import common.{Color, Edge, Graph, Terminal, TypedDay}
 import scala.concurrent.duration.*
 import scala.math.abs
 
-case object Day12 extends TypedDay:
+case object Day12 extends TypedDay.Generic:
   type Grid = Board[Char]
 
   given Graph[Grid] with

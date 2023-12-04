@@ -11,15 +11,15 @@ import scala.collection.parallel.CollectionConverters.*
 
 case object Day19 extends TypedDay:
 
-  val format = {
+  override type Input = Map[Int, State]
+
+  val format: Format = {
     val word = "\\w+".r
     val resource = (numberAs[Int] <* " " <*> word).map((x, u) => (u, x))
     val robot = " Each " *> word <* " robot costs " <*> resource.delimitedBy(" and ").map(_.toMap) <* "."
     val blueprint = "Blueprint " *> numberAs[Int] <* ":" <*> robot.repeated.map(_.toMap)
-    line(blueprint).repeated
+    line(blueprint).repeated.map(_.toMap.transform((_, rs) => State(rs)))
   }
-
-  def parse(in: IterableOnce[String]) = format(in.iterator.toSeq).toMap.transform((_, rs) => State(rs))
 
   private val cache = collection.mutable.Map.empty[(State, String), Option[State]]
 
@@ -124,25 +124,23 @@ case object Day19 extends TypedDay:
 
   override val timeout = 10.minutes
 
-  override def star1Task: Task = lines =>
-    parse(lines)
+  override def star1Task: Task =
+    _
       .map((id, s) => id * produceMax(s, "geode", 24))
       .sum
 
-  override def star2Task: Task = lines =>
-    val blueprints = parse(lines)
+  override def star2Task: Task = blueprints =>
     (1 to 3)
       .map(blueprints(_))
       .map(produceMax(_, "geode", 32))
       .product
 
   override def test(): Unit =
-    val t =
+    val state = parseSample(
       """
         |Blueprint 1: Each ore robot costs 4 ore. Each clay robot costs 2 ore. Each obsidian robot costs 3 ore and 14 clay. Each geode robot costs 2 ore and 7 obsidian.
         |Blueprint 2: Each ore robot costs 2 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 8 clay. Each geode robot costs 3 ore and 12 obsidian.
-        |""".stripMargin.trim.linesIterator.toVector
-    val state = parse(t)
+        |""".stripMargin)
     val blueprint1 = state(1).requirements
     State(blueprint1).buildInAnyTime("ore").map(_.time) shouldBe Some(5)
     State(blueprint1, production = Map("ore" -> 2)).buildInAnyTime("ore").map(_.time) shouldBe Some(3)

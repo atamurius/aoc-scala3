@@ -2,7 +2,7 @@ package aoc2022
 
 import common.TypedDay
 
-case object Day20 extends TypedDay:
+case object Day20 extends TypedDay.Generic:
 
   override def star1Task: Task = lines =>
     val values = lines.map(_.toLong).toVector

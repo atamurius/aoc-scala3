@@ -3,6 +3,7 @@ package common
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
+import scala.language.implicitConversions
 import scala.reflect.ClassTag
 import scala.util.control.NonFatal
 import scala.util.matching.Regex
@@ -16,8 +17,11 @@ object parse:
     def apply[T](f: this.Format[T]): lines.Format[T] =
       lines.single.mapWithError(line => f.parseFully(line.mkString))
 
+  extension[T] (format: line.Format[T])
+    def withSpacesBefore: line.Format[T] = "\\s*".r *> format
+  
   implicit def pattern(p: Regex): line.Format[String] = Format { it =>
-    p.findPrefixOf(it.mkString).map(s => (s, it.drop(s.length))).toRight(s"Can't find $p")
+    p.findPrefixOf(it.mkString).map(s => (s, it.drop(s.length))).toRight(s"Can't find $p at ${it.take(10).mkString}...")
   }
   def numberAs[T: Numeric]: line.Format[T] =
     pattern("[+-]?\\d+(\\.\\d+)?".r).mapWithError(x => Numeric[T].parseString(x).toRight(s"Invalid number $x"))
@@ -26,7 +30,7 @@ object parse:
 
   extension (l: line.Format[Iterable[Char]]) def asString: line.Format[String] = l.map(_.mkString)
 
-  case class Format[+T, I](parse: Iterable[I] => Either[String, (T, Iterable[I])]):
+  case class Format[+T, I](parse: Iterable[I] => Either[String, (T, Iterable[I])]) extends (Iterable[I] => T):
     outer =>
 
     private def tryE[T](f: => T): Either[String, T] =
@@ -90,6 +94,13 @@ object parse:
         if in.isEmpty then Right((res.result(), in))
         else outer.parse(in) match
           case Left(error) => Left(error)
+          case Right((t, rest)) => recur(rest, res += t)
+      Format(in => recur(in, List.newBuilder))
+
+    def anyAvailable: Format[List[T], I] =
+      @tailrec def recur(in: Iterable[I], res: mutable.Builder[T, List[T]]): Either[String, (List[T], Iterable[I])] =
+        outer.parse(in) match
+          case Left(error) => Right((res.result(), in))
           case Right((t, rest)) => recur(rest, res += t)
       Format(in => recur(in, List.newBuilder))
 

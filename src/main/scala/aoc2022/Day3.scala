@@ -4,7 +4,7 @@ import common.TypedDay
 
 import java.lang.Character.{isLowerCase, isUpperCase}
 
-case object Day3 extends TypedDay:
+case object Day3 extends TypedDay.Generic:
   def priority(item: Char): Int =
     if isLowerCase(item) then item - 'a' + 1
     else item - 'A' + 27

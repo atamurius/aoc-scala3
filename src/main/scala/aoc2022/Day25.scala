@@ -4,7 +4,7 @@ import common.TypedDay
 
 import scala.collection.Iterator.{iterate, unfold}
 
-case object Day25 extends TypedDay:
+case object Day25 extends TypedDay.Generic:
   def fromSNAFU(s: String): Long =
     val digits = s.reverseIterator.map {
       case '-' => -1

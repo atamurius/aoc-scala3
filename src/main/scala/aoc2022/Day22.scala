@@ -7,7 +7,7 @@ import common.coord.*
 
 import scala.annotation.tailrec
 
-case object Day22 extends TypedDay:
+case object Day22 extends TypedDay.Generic:
 
   val pathFormat = (numberAs[Int] or "R|L".r).repeated
 
