@@ -20,8 +20,10 @@ object parse:
   extension[T] (format: line.Format[T])
     def withSpacesBefore: line.Format[T] = "\\s*".r *> format
   
+  private def at(it: Iterable[Any]) = s" at ${it.take(10).mkString("")}..."
+  
   implicit def pattern(p: Regex): line.Format[String] = Format { it =>
-    p.findPrefixOf(it.mkString).map(s => (s, it.drop(s.length))).toRight(s"Can't find $p at ${it.take(10).mkString}...")
+    p.findPrefixOf(it.mkString).map(s => (s, it.drop(s.length))).toRight(s"Can't find $p${at(it)}")
   }
   def numberAs[T: Numeric]: line.Format[T] =
     pattern("[+-]?\\d+(\\.\\d+)?".r).mapWithError(x => Numeric[T].parseString(x).toRight(s"Invalid number $x"))
@@ -45,13 +47,13 @@ object parse:
     def flatMap[U](f: T => Format[U, I]): Format[U, I] = Format { in =>
       parse(in).flatMap {
         case (t, rest) => tryE(f(t).parse(rest))
-          .left.map(_ + s" at ${in.take(10)}...")
+          .left.map(_ + at(in))
           .flatten
       }
     }
     def mapWithError[U](f: T => Either[String, U]): Format[U, I] = Format { in =>
       parse(in).flatMap {
-        case (t, rest) => f(t).map(_ -> rest).left.map(_ + s" at ${in.take(10)}...")
+        case (t, rest) => f(t).map(_ -> rest).left.map(_ + at(in))
       }
     }
 
@@ -114,7 +116,7 @@ object parse:
   object Format:
     def const[I] = [T] => (t: T) => Format[T, I](in => Right(t -> in))
     def empty[I]: Format[Unit, I] = Format { in =>
-      if in.isEmpty then Right(() -> in) else Left(s"unexpected input ${in.take(10)}...")
+      if in.isEmpty then Right(() -> in) else Left(s"unexpected input ${at(in)}")
     }
 
   end Format
@@ -149,7 +151,7 @@ object parse:
 
   def literal[I](s: Iterable[I]): Format[s.type, I] = Format { in =>
     val (head, tail) = in.splitAt(s.size)
-    if head != s then Left(s"Expected $s but got ${in.take(s.size + 10)}...")
+    if head != s then Left(s"Expected $s but got ${in.take(s.size + 10).mkString("")}...")
     else Right(s -> tail)
   }
 

@@ -1,6 +1,6 @@
 package common
 
-case class Color(val codes: String*):
+case class Color(val codes: String*) extends (Any => String):
   def start = s"\u001b[${codes mkString ";"}m"
   def end = "\u001b[0m"
   def apply(value: Any): String = s"$start$value$end"
