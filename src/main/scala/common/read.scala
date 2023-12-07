@@ -75,7 +75,7 @@ object read:
       }.toVector
     )
 
-    def renderTiles(f: T => String): Unit = render((_, t) => f(t))
+    def renderTiles(f: T => String = _.toString): Unit = render((_, t) => f(t))
     
     def render(f: (Int2, T) => String): Unit =
       for (line, y) <- lines.iterator.zipWithIndex do
