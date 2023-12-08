@@ -6,6 +6,7 @@ case class Color(val codes: String*) extends (Any => String):
   def apply(value: Any): String = s"$start$value$end"
   def &(color: Color) = Color(codes ++ color.codes: _*)
   def and(f: => Color.type => Color): Color = &(f(Color))
+  def bright: Color = this & Color.bright
 
 object Color:
   val black = Color("30")

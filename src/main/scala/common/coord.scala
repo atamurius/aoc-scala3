@@ -143,7 +143,7 @@ object coord:
     case E extends Dir(Int2(1, 0))
     case S extends Dir(Int2(0, -1))
     case W extends Dir(Int2(-1, 0))
-
+    
     def left = this match
       case N => W
       case E => N
@@ -169,12 +169,14 @@ object coord:
     def between(start: Int2, end: Int2): Dir =
       val delta = end - start
       Dir.values.find(_.delta == delta).getOrElse(sys.error(s"$start and $end are not neighbours"))
+    extension (p: Int2) def ~ (d: Dir): Int2 = p + d.delta
 
   object GridDir:
     val L: Dir = Dir.W
     val R: Dir = Dir.E
     val U: Dir = Dir.S
     val D: Dir = Dir.N
+    export Dir.*
 
   case class Int3(x: Int, y: Int, z: Int):
     override def toString: String = this.show

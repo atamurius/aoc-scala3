@@ -49,7 +49,7 @@ object read:
 
   case class Board[T](lines: Vector[Vector[T]]):
     def height = lines.size
-    def width = lines.head.size
+    def width = lines.view.map(_.size).max
     def size = lines.iterator.map(_.size).sum
     def topLeft = Int2(0, 0)
     def bottomRight = Int2(width - 1, height - 1)
