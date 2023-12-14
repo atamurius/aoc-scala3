@@ -1,5 +1,6 @@
 package aoc2019
 
+import aoc2019.IntCode.Machine.{runToInput, runUntilInterruption}
 import common.*
 
 import scala.Specializable.Args
@@ -137,8 +138,10 @@ object IntCode:
 
     def run: Machine = stateAfter(Machine.run)
     def runIO(input: Val*): Vector[Val] = eval(Machine.runIO(input.toList))
+    def runAsciiIO(input: String): Vector[Val] = eval(Machine.runIO(input.map(x => x: Val).toList))
     def withInput(p: Val): Machine = stateAfter(Machine.runToInput(p))
     def runToOutput: (Val, Machine) = Machine.runToOutput(this)
+    def runInteractive(): Machine = stateAfter(Machine.runInteractive())
 
   def machine(program: String): Machine =
     Machine(SortedMap(program.split(",").toVector.map(_.toLong).zipWithIndex.map((a, b) => (b, a)): _*))
@@ -159,6 +162,26 @@ object IntCode:
 
         case State.Output(x) => runIO(input, output :+ x)
         case State.Halted => pure(output)
+      }
+    def runInteractive(inputBuffer: List[Val] = Nil): IO[Unit] =
+      runUntil {
+        case State.Input(addr) =>
+          val input = inputBuffer match
+          case Nil =>
+            Console.print("> ")
+            val line = Console.in.readLine()
+            (line.map(x => x: Val) :+ 10L).toList
+          case something => something
+          Change.writeAt(addr, input.head) *> runInteractive(input.tail)
+
+        case State.Output(x) =>
+          if x >= 0 && x <= 0xff then
+            Console.print(x.toChar)
+          else
+            Console.println(s"OUT: $x")
+          runInteractive(inputBuffer)
+
+        case State.Halted => pure(())
       }
     def runToInput(x: Val): IO[Unit] = runUntil { case State.Input(addr) => Change.writeAt(addr, x) }
     def runToOutput: IO[Val] = runUntil { case State.Output(x) => pure(x) }

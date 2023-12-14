@@ -170,6 +170,7 @@ object coord:
       val delta = end - start
       Dir.values.find(_.delta == delta).getOrElse(sys.error(s"$start and $end are not neighbours"))
     extension (p: Int2) def ~ (d: Dir): Int2 = p + d.delta
+    extension (p: Int2) def ~~ (d: Dir): Iterator[Int2] = Iterator.iterate(p)(_ ~ d)
 
   object GridDir:
     val L: Dir = Dir.W

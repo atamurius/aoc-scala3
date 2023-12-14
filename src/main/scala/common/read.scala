@@ -104,5 +104,7 @@ object read:
     def read(lines: Iterator[String], separator: Regex = "[\\s,;]+".r) =
       Board(lines.map(l => separator.split(l.trim).toVector).toVector)
 
+    def ofChars(lines: IterableOnce[String]): Board[Char] = Board(lines.iterator.map(_.toVector).toVector)
+    
     def build[T](width: Int, height: Int)(f: Int2 => T): Board[T] =
       Board(Vector.tabulate(height)(y => Vector.tabulate(width)(x => f(Int2(x, y)))))
